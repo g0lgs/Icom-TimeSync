@@ -4,6 +4,7 @@
 # Feb-2024
 
 # Set Date/Time on Icom 7300/9700 radio
+#
 # This script sets the time slightly wrong because you cannot set seconds, only minutes.
 # I prefer to set time a little incorrectly rather than to wait for up to 59 seconds
 
@@ -40,14 +41,14 @@ def sendcmd(ser,cmd):
 def getresp(ser):
     s = ''
     while s != b'\xFE':
-        if debug : print( "waiting for sync...." + ''.join("{:02x}".format(x) for x in s) )
+        if debug : print( "Waiting for sync...." + ''.join("{:02x}".format(x) for x in s) )
         s = ser.read()
         # Timeout?
         if len(s) == 0:
             break;
 
     if ser.read() == b'\xfe':
-        if debug : print( "synced, packet info :")
+        if debug : print( "Synced, packet info :")
         i = 0
         rxdata = []
         while s != b'\xFD':
@@ -126,7 +127,7 @@ def ic9700_set_time(ser):
 def main():
 
     if not radio in ['7300', '9700']:
-        print ("Unsupported radio:",radio)
+        print( "ERROR: Unsupported radio:",radio )
         exit(1)
 
     # Get time in GMT. If you want local time change to "t = time.localtime()"
@@ -145,7 +146,7 @@ def main():
 
     except serial.SerialException as e:
         if e.errno == 2:
-            print( "No such port:", serialport )
+            print( "ERROR: No such port:", serialport )
             exit(1)
         else:
             print( "Unexpected error", e.errno )
@@ -162,6 +163,7 @@ def main():
 
         if dat is None:
             # Do nothing
+            if debug: print( "Timeout.." )
             time.sleep(0.1)
 
         elif len(dat) > 2:
