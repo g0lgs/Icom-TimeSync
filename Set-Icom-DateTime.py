@@ -1,108 +1,289 @@
 #!/usr/bin/python3
 
-# By Stewart G0LGS
-# 04-Feb-2024
+# Copyright (c) Stewart Wilkinson (G0LGS)
+# V1.0 Created 07-Feb-2024
 
-# based on https://github.com/Kurgan-/icom-set-time
-
-# You will need pyserial
-
+# Set Date/Time on Icom 7300/9700 radio
+#
 # This script sets the time slightly wrong because you cannot set seconds, only minutes.
 # I prefer to set time a little incorrectly rather than to wait for up to 59 seconds
 
-radio="7300"			# Set Radio Model
-civaddress="0x94"		# Radio address (7300 = 0x94, 9700 = 0xA2).
-baudrate = 115200		# Radio serial speed
-serialport = "/dev/ic7300"  # Serial port of your radios serial interface.
+# You will need the following libs:
+#    pyserial
+
+# Set Radio Model
+radio="9700"
+# Radio address (7300 = 0x94, 9700 = 0xA2).
+radiociv="0xa2"
+# Radio serial speed
+baudrate = 115200
+# Serial port of your radios serial interface (often /dev/ttyUSB0)
+serialport = "/dev/ttyUSB0"
+
+# You can set a serial port by id so that it always connect to the correct radio, which is
+# usefeul if you have more than one usb serial port connected
+#
+#serialport="/dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_IC-9700_12345678_A-if00-port0"
+#serialport="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_IC-7300_87654321-if00-port0"
+
+# **** Nothing below should need to be changed ****
+myciv="0xc0"
+debug=0
 
 # Import libraries we'll need to use
+import os
+import sys
 import time
 import serial
 import struct
 
-if not radio in ['7300', '9700']:
-	print ("Unsupported radio:",radio)
-	exit(1)
+def sendcmd(ser,cmd):
+    count = 0
 
-# Get time in GMT. If you want local time change to "t = time.localtime()"
-t = time.gmtime()
+    if debug:
+        print ( "Sending: ", cmd )
 
-# extract strings for year, day, month, hour, minute
-# with a leading zero if needed
-year = str(t.tm_year)
-month = str(t.tm_mon).rjust(2,'0')
-day = str(t.tm_mday).rjust(2,'0')
-hour = str(t.tm_hour).rjust(2,'0')
-minute = str(t.tm_min).rjust(2,'0')
+    while(count < len(cmd)):
+        senddata = int(bytes(cmd[count], 'UTF-8'), 16)
+        ser.write(struct.pack('>B', senddata))
+        count = count +1
 
-# Set Date first
+def GetResp(ser):
+    s = ''
+    while s != b'\xFE':
+        if debug : print( "Waiting for sync...." + ''.join("{:02x}".format(x) for x in s) )
+        s = ser.read()
+        # Timeout?
+        if len(s) == 0:
+            break;
 
-if radio == "7300":
-    command = ["0xFE", "0xFE", civaddress, "0xE0", "0x1A", "0x05" ]
-    command.append("0x00")
-    command.append("0x94")
-if radio == "9700":
-    command = ["0xFE", "0xFE", civaddress, "0xE0", "0x1A", "0x05" ]
-    command.append("0x01")
-    command.append("0x79")
+    if ser.read() == b'\xFE':
+        if debug : print( "Synced, packet info :")
+        i = 0
+        rxdata = []
+        while s != b'\xFD':
+            s = ser.read()
+            if  i == 0 :
+                if debug : print( "TO: " + ''.join(format(x, '02x') for x in s) )
+            elif i == 1:
+                if debug : print( "FROM: " + ''.join(format(x, '02x') for x in s) )
+            else:
+                rxdata.append(s)
+                if debug : print( "Data: " + ''.join(format(x, '02x') for x in s) )
+            i +=1
 
-command.append("0x"+year[0:2])
-command.append("0x"+year[2:])
-command.append("0x"+month)
-command.append("0x"+day)
-command.append("0xFD")
+        rxdata.pop()
+        return rxdata
 
-try:
-	ser = serial.Serial(serialport, baudrate, bytesize=8, parity='N', stopbits=1, timeout=None, xonxoff=0, rtscts=0)
+# check for Ack
+def CheckAck(ser):
+    timeout = time.time() + 10
+    AckOk=0
+    while AckOk==0:
+        dat = GetResp(ser)
 
-except serial.SerialException as e:
-	if e.errno == 2:
-		print( "No such port:", serialport)
-		exit(1)
-	else:
-		print( "Unexpected error", e.errno )
-		exit(1)
+        if dat is None:
+            # Do nothing
+            if debug: print( "Timeout.." )
+            time.sleep(0.1)
 
-count = 0
-while(count < 13):
-    senddata = int(bytes(command[count], 'UTF-8'), 16)
-    ser.write(struct.pack('>B', senddata))
-    count = count +1
+        else:
+            if dat[0] == b'\xfb':
+                if debug :
+                    print( "Got Ack: " +dat[0].hex() )
+                AckOk=1
 
-ser.close()
+        if time.time() > timeout:
+            break
 
-# Set Time
+    return AckOk
 
-if radio == "7300":
-    command = ["0xFE", "0xFE", civaddress, "0xE0", "0x1A", "0x05" ]
-    command.append("0x00")
-    command.append("0x95")
-if radio == "9700":
-    command = ["0xFE", "0xFE", civaddress, "0xE0", "0x1A", "0x05" ]
-    command.append("0x01")
-    command.append("0x80")
+def get_frequency(ser):
+    cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x03", "0xFD" ]
+    sendcmd(ser,cmd)
 
-command.append("0x"+hour)
-command.append("0x"+minute)
-command.append("0xFD")
+def show_frequency(data):
+    vals = [data[i].hex() for i in range (0, len(data))]
+    cmd = ''.join(vals)
+    print( "Frequency: " + cmd[10:11]+"."+cmd[11:12]+cmd[8:9]+cmd[9:10] + "." + cmd[6:7]+ cmd[7:8] + cmd[4:5] + "." + cmd[5:6]+ cmd[2:3] )
 
-try:
-	ser = serial.Serial(serialport, baudrate, bytesize=8, parity='N', stopbits=1, timeout=None, xonxoff=0, rtscts=0)
+# 7300 Time / Date Functions
+def ic7300_get_date(ser):
+    cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x1A", "0x05", "0x00", "0x94", "0xFD" ]
+    sendcmd(ser,cmd)
 
-except serial.SerialException as e:
-	if e.errno == 2:
-		print( "No such port:", serialport)
-		exit(1)
-	else:
-		print( "Unexpected error", e.errno )
-		exit(1)
+def ic7300_set_date(ser):
+    global year
+    global month
+    global day
+    cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x1A", "0x05", "0x00", "0x94" ]
+    cmd.append("0x"+year[0:2])
+    cmd.append("0x"+year[2:])
+    cmd.append("0x"+month)
+    cmd.append("0x"+day)
+    cmd.append("0xFD")
+    if debug: print ("Setting Date")
+    sendcmd(ser,cmd)
 
-count = 0
-while(count < 11):
-    senddata = int(bytes(command[count], 'UTF-8'), 16)
-    ser.write(struct.pack('>B', senddata))
-    count = count +1
+def ic7300_get_time(ser):
+    cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x1A", "0x05", "0x00", "0x95", "0xFD" ]
+    sendcmd(ser,cmd)
 
-ser.close()
+def ic7300_set_time(ser):
+    global hour
+    global minute
+    cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x1A", "0x05", "0x00", "0x95" ]
+    cmd.append("0x"+hour)
+    cmd.append("0x"+minute)
+    cmd.append("0xFD")
+    if debug: print ("Setting Time")
+    sendcmd(ser,cmd)
 
-print( "Done")
+# 9700 Time / Date Functions
+def ic9700_get_date(ser):
+    cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x1A", "0x05", "0x01", "0x79", "0xFD"]
+    sendcmd(ser,cmd)
+
+def ic9700_set_date(ser):
+    global year
+    global month
+    global day
+    cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x1A", "0x05", "0x01", "0x79" ]
+    cmd.append("0x"+year[0:2])
+    cmd.append("0x"+year[2:])
+    cmd.append("0x"+month)
+    cmd.append("0x"+day)
+    cmd.append("0xFD")
+    sendcmd(ser,cmd)
+
+def ic9700_get_time(ser):
+    cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x1A", "0x05", "0x01", "0x80", "0xFD" ]
+    sendcmd(ser,cmd)
+
+def ic9700_set_time(ser):
+    global hour
+    global minute
+    cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x1A", "0x05", "0x01", "0x80" ]
+    cmd.append("0x"+hour)
+    cmd.append("0x"+minute)
+    cmd.append("0xFD")
+    sendcmd(ser,cmd)
+
+
+def main():
+    global year
+    global month
+    global day
+    global hour
+    global minute
+
+    if not radio in ['7300', '9700']:
+        sys.stderr.write( "ERROR: Unsupported radio: " + radio +"\n" )
+        exit(1)
+
+    # Exit Code
+    ExitCode=0
+
+    # Get time in GMT. If you want local time change to "t = time.localtime()"
+    t = time.gmtime()
+
+    # extract strings for year, day, month, hour, minute
+    # with a leading zero if needed
+    year = str(t.tm_year)
+    month = str(t.tm_mon).rjust(2,'0')
+    day = str(t.tm_mday).rjust(2,'0')
+    hour = str(t.tm_hour).rjust(2,'0')
+    minute = str(t.tm_min).rjust(2,'0')
+
+    try:
+        ser = serial.Serial(serialport, baudrate, bytesize=8, parity='N', stopbits=1, timeout=2, xonxoff=0, rtscts=0)
+
+    except serial.SerialException as e:
+        if e.errno == 2:
+            sys.stderr.write( "ERROR: No such port :" +serialport + "\n" )
+            exit(1)
+        else:
+            sys.stderr.write( "Unexpected error"+ e.errno + "\n" )
+            exit(1)
+
+    if debug : print ("Testing radio communications")
+    # Try reading frequency
+    get_frequency(ser)
+
+    # Listen for Response (with Timeout)
+    timeout = time.time() + 10
+    CmdOk=0
+    while CmdOk==0:
+        dat = GetResp(ser)
+
+        if dat is None:
+            # Do nothing
+            if debug: print( "Timeout.." )
+            time.sleep(0.1)
+
+        elif len(dat) > 2:
+
+            if dat[0] == b'\x03':
+                if debug :
+                    print( "Got (03) :")
+                    show_frequency(dat)
+                CmdOk=1
+
+            # Ack
+            elif dat[0] == b'\xfb':
+                if debug : print( "Got (FB) :")
+                CmdOk=1
+
+            else:
+                print ( "Unexpected response (" +dat[0].hex() + ")")
+                vals = [dat[i].hex() for i in range (0, len(dat))]
+                cmd = ';'.join(vals)
+                print (cmd)
+
+        if time.time() > timeout:
+            break
+
+    if CmdOk:
+        if debug: print( radio +" Got response from radio")
+    else:
+        sys.stderr.write( "ERROR: No/Unexpected response from " + radio + " on " + serialport + "\n" )
+        ser.close()
+        exit(2)
+
+    if radio == "7300":
+            ic7300_set_date(ser)
+            if not CheckAck(ser):
+                ExitCode=3
+            else:
+                ic7300_set_time(ser)
+                if not CheckAck(ser):
+                    ExitCode=4
+
+    elif radio == "9700":
+            ic9700_set_date(ser)
+            if not CheckAck(ser):
+                ExitCode=3
+            else:
+                ic9700_set_time(ser)
+                if not CheckAck(ser):
+                    ExitCode=4
+
+    ser.close()
+
+    if ExitCode == 0:
+        print( "Ok")
+    else:
+        sys.stderr.write( "ERROR: No/Unexpected reponse from Radio\n" )
+
+    exit(ExitCode)
+
+if __name__ == "__main__":
+    try:
+        main()
+
+    except KeyboardInterrupt:
+        sys.stderr.write( "Interrupted\n" )
+        try:
+            sys.exit(130)
+        except SystemExit:
+            os._exit(130)

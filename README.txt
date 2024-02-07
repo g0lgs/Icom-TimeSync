@@ -12,11 +12,17 @@ i.e
 	sudo chmod +x /usr/local/Set-Icom7300-DateTime.py
 	sudo chmod +x /usr/local/Set-Icom9700-DateTime.py
 
-Then edit the following lines in each script:
+Then edit the following lines in each script ie:
 
-	radio="7300"            # Set Radio Model
-	civaddress="0x94"       # Radio address (7300 = 0x94, 9700 = 0xA2).
-	baudrate = 115200       # Radio serial speed
+	radio="7300"
+	radiociv="0x94"
+	baudrate = 115200
+	serialport = "/dev/ttyUSB0"  # Serial port of your radios serial interface.
+or
+
+	radio="9700"
+	radiociv="0xA2"
+	baudrate = 115200
 	serialport = "/dev/ttyUSB0"  # Serial port of your radios serial interface.
 
 You can set a serial port by id so that it always connect to the correct radio, which is
@@ -24,12 +30,12 @@ usefeul if you have more than one usb serial port connected
 
 like:
 
-	serialport = "/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_IC-7300_03011354-if00-port0"
+	serialport = "/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_IC-7300_12345678-if00-port0"
 or
-	serialport = "/dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_IC-9700_13001015_A-if00-port0"
+	serialport = "/dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_IC-9700_12345678_A-if00-port0"
 
 
-You could add a udev rule to create a symlink that always points to the correct radio
+You could use a udev rule to create a symlink that always points to the correct radio
 
 Use
 
