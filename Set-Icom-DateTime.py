@@ -1,10 +1,8 @@
 #!/usr/bin/python3
 
 # Copyright (c) Stewart Wilkinson (G0LGS)
-# V1.0 Created 07-Feb-2024
-# V1.0.1 Add Untested 7100 support
-# V1.0.2 Add option for using Local Time
-# V1.0.3 Add Logging (syslog)
+# Created 07-Feb-2024
+# Updated 10-Feb-2024
 
 # Set Date/Time on Icom 7100/7300/9700 radio
 #
@@ -235,7 +233,7 @@ def main():
 
     if not radio in ['7100', '7300', '9700']:
         sys.stderr.write( "ERROR: Unsupported radio: " + radio +"\n" )
-        logger.debug( "Unsupported radio: " + radio )
+        logger.warning( "Unsupported radio: " + radio )
         exit(1)
 
     # Exit Code
@@ -260,12 +258,12 @@ def main():
 
     except serial.SerialException as e:
         if e.errno == 2:
-            sys.stderr.write( "ERROR: No such port :" +serialport + "\n" )
-            logger.debug( "No such port :" +serialport )
+            sys.stderr.write( "ERROR: No such port: " +serialport + "\n" )
+            logger.warning( "No such port: " +serialport )
             exit(1)
         else:
-            sys.stderr.write( "Unexpected error"+ e.errno + "\n" )
-            logger.debug( "Unexpected error"+ e.errno )
+            sys.stderr.write( "Unexpected error: "+ e.errno + "\n" )
+            logger.warning( "Unexpected error: "+ e.errno )
             exit(1)
 
     if debug : print ("Testing radio communications")
@@ -310,7 +308,7 @@ def main():
     else:
         ser.close()
         sys.stderr.write( "ERROR: No/Unexpected response from " + radio + " on " + serialport + "\n" )
-        logger.debug( "No/Unexpected response from " + radio + " on " + serialport )
+        logger.warning( "No/Unexpected response from " + radio + " on " + serialport )
         exit(2)
 
     if radio == "7100":
@@ -343,10 +341,11 @@ def main():
     ser.close()
 
     if ExitCode == 0:
-        print( "Ok")
+        print( "Ok" )
+        logger.info( "DateTime set on " + radio )
     else:
         sys.stderr.write( "ERROR: No/Unexpected reponse from Radio\n" )
-        logger.debug( "No/Unexpected response from " + radio + " on " + serialport )
+        logger.warning( "No/Unexpected response from " + radio + " on " + serialport )
 
     exit(ExitCode)
 
