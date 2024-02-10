@@ -1,23 +1,39 @@
 
-Script to set the Time on Icom 7300 and Icom 9700 Radios 
-based on https://github.com/Kurgan-/icom-set-time
+# Icom-7300-TimeSync
+
+Script to set the Time on Icom 7100, 7300 and 9700 Radios 
+
+Inspired by https://github.com/Kurgan-/icom-set-time
+
+You will need the python3 pyserial library - if that is not installed you need to install it for the user
+that you are using the script as ('root' if you are running it from the udev rules) - consult you OS Docs
 
 I suggest you place a copy of the Script for each radio in /usr/local/bin
 
 i.e
 
+	sudo cp Set-Icom-DateTime.py /usr/local/Set-Icom7100-DateTime.py
 	sudo cp Set-Icom-DateTime.py /usr/local/Set-Icom7300-DateTime.py
 	sudo cp Set-Icom-DateTime.py /usr/local/Set-Icom9700-DateTime.py
 
+	sudo chmod +x /usr/local/Set-Icom7100-DateTime.py
 	sudo chmod +x /usr/local/Set-Icom7300-DateTime.py
 	sudo chmod +x /usr/local/Set-Icom9700-DateTime.py
 
 Then edit the following lines in each script ie:
 
+	radio="7100"
+	radiociv="0x88"
+	baudrate = 115200
+	serialport = "/dev/ttyUSB0"  # Serial port of your radios serial interface.
+
+or
+
 	radio="7300"
 	radiociv="0x94"
 	baudrate = 115200
 	serialport = "/dev/ttyUSB0"  # Serial port of your radios serial interface.
+
 or
 
 	radio="9700"

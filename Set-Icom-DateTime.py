@@ -2,8 +2,9 @@
 
 # Copyright (c) Stewart Wilkinson (G0LGS)
 # V1.0 Created 07-Feb-2024
+# V1.0.1 Add Untested 7100 support
 
-# Set Date/Time on Icom 7300/9700 radio
+# Set Date/Time on Icom 7100/7300/9700 radio
 #
 # This script sets the time slightly wrong because you cannot set seconds, only minutes.
 # I prefer to set time a little incorrectly rather than to wait for up to 59 seconds
@@ -11,9 +12,9 @@
 # You will need the following libs:
 #    pyserial
 
-# Set Radio Model
+# Set Radio Model (7100/7300/9700)
 radio="9700"
-# Radio address (7300 = 0x94, 9700 = 0xA2).
+# Radio address (7100= 0x88, 7300 = 0x94, 9700 = 0xA2).
 radiociv="0xa2"
 # Radio serial speed
 baudrate = 115200
@@ -26,8 +27,10 @@ serialport = "/dev/ttyUSB0"
 #serialport="/dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_IC-9700_12345678_A-if00-port0"
 #serialport="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_IC-7300_87654321-if00-port0"
 
-# **** Nothing below should need to be changed ****
+# Address for the 'controller' (this script) - change only if you have a conflict with one of your radios
 myciv="0xc0"
+
+# **** Nothing below should need to be changed ****
 debug=0
 
 # Import libraries we'll need to use
@@ -107,6 +110,38 @@ def show_frequency(data):
     cmd = ''.join(vals)
     print( "Frequency: " + cmd[10:11]+"."+cmd[11:12]+cmd[8:9]+cmd[9:10] + "." + cmd[6:7]+ cmd[7:8] + cmd[4:5] + "." + cmd[5:6]+ cmd[2:3] )
 
+# 7100 Time / Date Functions
+def ic7100_get_date(ser):
+    cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x1A", "0x05", "0x01", "0x20", "0xFD" ]
+    sendcmd(ser,cmd)
+
+def ic7100_set_date(ser):
+    global year
+    global month
+    global day
+    cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x1A", "0x05", "0x01", "0x20" ]
+    cmd.append("0x"+year[0:2])
+    cmd.append("0x"+year[2:])
+    cmd.append("0x"+month)
+    cmd.append("0x"+day)
+    cmd.append("0xFD")
+    if debug: print ("Setting Date")
+    sendcmd(ser,cmd)
+
+def ic7100_get_time(ser):
+    cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x1A", "0x05", "0x01", "0x21", "0xFD" ]
+    sendcmd(ser,cmd)
+
+def ic7100_set_time(ser):
+    global hour
+    global minute
+    cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x1A", "0x05", "0x01", "0x21" ]
+    cmd.append("0x"+hour)
+    cmd.append("0x"+minute)
+    cmd.append("0xFD")
+    if debug: print ("Setting Time")
+    sendcmd(ser,cmd)
+
 # 7300 Time / Date Functions
 def ic7300_get_date(ser):
     cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x1A", "0x05", "0x00", "0x94", "0xFD" ]
@@ -177,7 +212,7 @@ def main():
     global hour
     global minute
 
-    if not radio in ['7300', '9700']:
+    if not radio in ['7100', '7300', '9700']:
         sys.stderr.write( "ERROR: Unsupported radio: " + radio +"\n" )
         exit(1)
 
@@ -250,7 +285,16 @@ def main():
         ser.close()
         exit(2)
 
-    if radio == "7300":
+    if radio == "7100":
+            ic7100_set_date(ser)
+            if not CheckAck(ser):
+                ExitCode=3
+            else:
+                ic7100_set_time(ser)
+                if not CheckAck(ser):
+                    ExitCode=4
+
+    elif radio == "7300":
             ic7300_set_date(ser)
             if not CheckAck(ser):
                 ExitCode=3
