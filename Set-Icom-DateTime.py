@@ -4,6 +4,7 @@
 # V1.0 Created 07-Feb-2024
 # V1.0.1 Add Untested 7100 support
 # V1.0.2 Add option for using Local Time
+# V1.0.3 Add Logging (syslog)
 
 # Set Date/Time on Icom 7100/7300/9700 radio
 #
@@ -43,6 +44,9 @@ import sys
 import time
 import serial
 import struct
+import logging
+from logging.handlers import SysLogHandler
+
 
 def sendcmd(ser,cmd):
     count = 0
@@ -216,8 +220,22 @@ def main():
     global hour
     global minute
 
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+
+    handler = logging.handlers.SysLogHandler(facility=SysLogHandler.LOG_DAEMON, address = '/dev/log')
+
+    formatter = logging.Formatter(
+        fmt="%(filename)s:%(funcName)s:%(lineno)d %(levelname)s %(message)s"
+    )
+
+    handler.setFormatter(formatter)
+
+    logger.addHandler(handler)
+
     if not radio in ['7100', '7300', '9700']:
         sys.stderr.write( "ERROR: Unsupported radio: " + radio +"\n" )
+        logger.debug( "Unsupported radio: " + radio )
         exit(1)
 
     # Exit Code
@@ -243,9 +261,11 @@ def main():
     except serial.SerialException as e:
         if e.errno == 2:
             sys.stderr.write( "ERROR: No such port :" +serialport + "\n" )
+            logger.debug( "No such port :" +serialport )
             exit(1)
         else:
             sys.stderr.write( "Unexpected error"+ e.errno + "\n" )
+            logger.debug( "Unexpected error"+ e.errno )
             exit(1)
 
     if debug : print ("Testing radio communications")
@@ -288,8 +308,9 @@ def main():
     if CmdOk:
         if debug: print( radio +" Got response from radio")
     else:
-        sys.stderr.write( "ERROR: No/Unexpected response from " + radio + " on " + serialport + "\n" )
         ser.close()
+        sys.stderr.write( "ERROR: No/Unexpected response from " + radio + " on " + serialport + "\n" )
+        logger.debug( "No/Unexpected response from " + radio + " on " + serialport )
         exit(2)
 
     if radio == "7100":
@@ -325,6 +346,7 @@ def main():
         print( "Ok")
     else:
         sys.stderr.write( "ERROR: No/Unexpected reponse from Radio\n" )
+        logger.debug( "No/Unexpected response from " + radio + " on " + serialport )
 
     exit(ExitCode)
 
