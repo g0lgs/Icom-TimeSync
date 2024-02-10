@@ -59,14 +59,20 @@ Use
 or
     sudo udevadm info -a -n ttyUSB0
 
-To get the inforamtion to create a udev rule in /etc/udev/rules.d/99 like:
+Look for the following:
+
+	ATTRS{idVendor}
+	ATTRS{idProduct}
+	ATTRS{serial}
+
+create a udev rule in /etc/udev/rules.d/99 using the above like:
 
 # IC 7300
-KERNEL=="ttyUSB?" SUBSYSTEMS=="usb", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="IC-7300 03011354", SYMLINK+="ic7300"
+ACTION=="add", KERNEL=="ttyUSB?" SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="IC-7300 03011354", SYMLINK+="ic7300"
 
 or
 
-KERNEL=="ttyUSB?" SUBSYSTEMS=="usb", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="IC-7300 03011354", SYMLINK+="ic7300" RUN{program}+="/usr/local/bin/Set-Icom7300-DateTime.py &"
+ACTION=="add", KERNEL=="ttyUSB?" SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="IC-7300 03011354", SYMLINK+="ic7300" RUN{program}+="/usr/local/bin/Set-Icom7300-DateTime.py"
 
 Which would run the script when the Radio is connected or the Computer is started with the Radio connected.
 
