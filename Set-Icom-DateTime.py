@@ -3,6 +3,7 @@
 # Copyright (c) Stewart Wilkinson (G0LGS)
 # V1.0 Created 07-Feb-2024
 # V1.0.1 Add Untested 7100 support
+# V1.0.2 Add option for using Local Time
 
 # Set Date/Time on Icom 7100/7300/9700 radio
 #
@@ -26,6 +27,9 @@ serialport = "/dev/ttyUSB0"
 #
 #serialport="/dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_IC-9700_12345678_A-if00-port0"
 #serialport="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_IC-7300_87654321-if00-port0"
+
+# Set to True for LocalTime instead of default GMT
+UseLocalTime=False
 
 # Address for the 'controller' (this script) - change only if you have a conflict with one of your radios
 myciv="0xc0"
@@ -219,8 +223,11 @@ def main():
     # Exit Code
     ExitCode=0
 
-    # Get time in GMT. If you want local time change to "t = time.localtime()"
-    t = time.gmtime()
+    # Get time (defaut is GMT)
+    if UseLocalTime:
+        t = time.localtime()
+    else:
+        t = time.gmtime()
 
     # extract strings for year, day, month, hour, minute
     # with a leading zero if needed
