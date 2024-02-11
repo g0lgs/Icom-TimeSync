@@ -77,9 +77,9 @@ Look for the following:
 
 create a udev rule in /etc/udev/rules.d/
 
-	I use '99-hamlib.conf' but you can use something else as long as it is a .conf
+	I use '99-hamlib.rules' but you can use something else as long as it is a .rules
 
-	sudo nano /etc/udev/rules.d/99-hamlib.conf 
+	sudo nano /etc/udev/rules.d/99-hamlib.rules
 
 Enter the information found above like:
 
