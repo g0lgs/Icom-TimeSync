@@ -261,9 +261,13 @@ def main():
             sys.stderr.write( "ERROR: No such port: " +serialport + "\n" )
             logger.warning( "No such port: " +serialport )
             exit(1)
+        if e.errno == 16:
+            sys.stderr.write( "ERROR: port: " +serialport + " busy\n" )
+            logger.warning( "Port: " +serialport + " busy" )
+            exit(1)
         else:
-            sys.stderr.write( "Unexpected error: "+ e.errno + "\n" )
-            logger.warning( "Unexpected error: "+ e.errno )
+            sys.stderr.write( "Unexpected error: "+ str(e.errno) + "\n" )
+            logger.warning( "Unexpected error: "+ str(e.errno) )
             exit(1)
 
     if debug : print ("Testing radio communications")
