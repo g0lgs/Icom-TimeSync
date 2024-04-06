@@ -171,7 +171,7 @@ When the Installation is Complete Open a command prompt
 
 	pip install pyserial
 
-Now download the 'Set-Icom-DateTime.py' from this Git Repositry and save it to Your desktop
+Now download the 'Set-Icom-DateTime-Windows.py' from this Git Repositry and save it to Your desktop
 
 After Downloading open the file in your prefered Text Editor (i.e Notepad++)
 

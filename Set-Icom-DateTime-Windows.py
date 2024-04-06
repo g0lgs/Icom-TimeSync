@@ -1,38 +1,40 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # Copyright (c) Stewart Wilkinson (G0LGS)
-# Created 07-Feb-2024
-# Updated 10-Feb-2024
+# Re-worked for Windows 06/04/2024
 
 # Set Date/Time on Icom 7100/7300/9700 radio
 #
 # This script sets the time slightly wrong because you cannot set seconds, only minutes.
 # I prefer to set time a little incorrectly rather than to wait for up to 59 seconds
 
-# You will need the following libs:
+# You will need to install the following libs:
 #    pyserial
 
 import platform
 
-if platform.system() != 'Linux':
-    print("Sorry: This Version only works in Linux - Use 'Set-Icom-DateTime-Windows.py' for use in Windows")
-    input("Press Enter to exit...")
+if platform.system() != 'Windows':
+    print("Sorry: This Version only works in Windows - Use 'Set-Icom-DateTime.py' for use in Linux")
+    input("Press Enter to Exit...")
     exit(1)
 
 # Set Radio Model (7100/7300/9700)
-radio="9700"
+radio="7300"
 # Radio address (7100= 0x88, 7300 = 0x94, 9700 = 0xA2).
-radiociv="0xa2"
+radiociv="0x94"
 # Radio serial speed
-baudrate = 115200
-# Serial port of your radios serial interface (often /dev/ttyUSB0)
-serialport = "/dev/ttyUSB0"
+baud = 115200
 
-# You can set a serial port by id so that it always connect to the correct radio, which is
-# usefeul if you have more than one usb serial port connected
-#
-#serialport="/dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_IC-9700_12345678_A-if00-port0"
-#serialport="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_IC-7300_87654321-if00-port0"
+# Serial port of your radios serial interface (i.e com3)
+serialport = "com5"
+
+# Import libraries we'll need to use
+import os
+import sys
+import time
+import serial
+import struct
+import ctypes
 
 # Set to True for LocalTime instead of default GMT
 UseLocalTime=False
@@ -41,17 +43,7 @@ UseLocalTime=False
 myciv="0xc0"
 
 # **** Nothing below should need to be changed ****
-debug=0
-
-# Import libraries we'll need to use
-import os
-import sys
-import time
-import serial
-import struct
-import logging
-from logging.handlers import SysLogHandler
-
+debug=False
 
 def sendcmd(ser,cmd):
     count = 0
@@ -93,7 +85,7 @@ def GetResp(ser):
 
 # check for Ack
 def CheckAck(ser):
-    timeout = time.time() + 10
+    timeout = time.time() + 5
     AckOk=0
     while AckOk==0:
         dat = GetResp(ser)
@@ -225,22 +217,8 @@ def main():
     global hour
     global minute
 
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-
-    handler = logging.handlers.SysLogHandler(facility=SysLogHandler.LOG_DAEMON, address = '/dev/log')
-
-    formatter = logging.Formatter(
-        fmt="%(filename)s:%(funcName)s:%(lineno)d %(levelname)s %(message)s"
-    )
-
-    handler.setFormatter(formatter)
-
-    logger.addHandler(handler)
-
     if not radio in ['7100', '7300', '9700']:
-        sys.stderr.write( "ERROR: Unsupported radio: " + radio +"\n" )
-        logger.warning( "Unsupported radio: " + radio )
+        ctypes.windll.user32.MessageBoxW(0, "Unsupported radio: " + radio, "Icom TimeSync", 0)
         exit(1)
 
     # Exit Code
@@ -261,28 +239,18 @@ def main():
     minute = str(t.tm_min).rjust(2,'0')
 
     try:
-        ser = serial.Serial(serialport, baudrate, bytesize=8, parity='N', stopbits=1, timeout=2, xonxoff=0, rtscts=0)
+        ser = serial.Serial(port=serialport, baudrate=baud, bytesize=8, parity='N', stopbits=1, timeout=2, xonxoff=0, rtscts=0)
 
-    except serial.SerialException as e:
-        if e.errno == 2:
-            sys.stderr.write( "ERROR: No such port: " +serialport + "\n" )
-            logger.warning( "No such port: " +serialport )
-            exit(1)
-        if e.errno == 16:
-            sys.stderr.write( "ERROR: port: " +serialport + " busy\n" )
-            logger.warning( "Port: " +serialport + " busy" )
-            exit(1)
-        else:
-            sys.stderr.write( "Unexpected error: "+ str(e.errno) + "\n" )
-            logger.warning( "Unexpected error: "+ str(e.errno) )
-            exit(1)
+    except serial.SerialException as serErr:
+        ctypes.windll.user32.MessageBoxW(0, str(serErr), "Icom TimeSync", 0)
+        exit(1)
 
-    if debug : print ("Testing radio communications")
+    print ("Testing radio communications")
     # Try reading frequency
     get_frequency(ser)
 
     # Listen for Response (with Timeout)
-    timeout = time.time() + 10
+    timeout = time.time() + 5
     CmdOk=0
     while CmdOk==0:
         dat = GetResp(ser)
@@ -295,18 +263,18 @@ def main():
         elif len(dat) > 2:
 
             if dat[0] == b'\x03':
-                if debug :
+                if debug:
                     print( "Got (03) :")
                     show_frequency(dat)
                 CmdOk=1
 
             # Ack
             elif dat[0] == b'\xfb':
-                if debug : print( "Got (FB) :")
+                if debug: print( "Got (FB) :")
                 CmdOk=1
 
             else:
-                print ( "Unexpected response (" +dat[0].hex() + ")")
+                if debug: print ( "Unexpected response (" +dat[0].hex() + ")")
                 vals = [dat[i].hex() for i in range (0, len(dat))]
                 cmd = ';'.join(vals)
                 print (cmd)
@@ -315,11 +283,10 @@ def main():
             break
 
     if CmdOk:
-        if debug: print( radio +" Got response from radio")
+        print( "Ok - Got response from " + radio )
     else:
         ser.close()
-        sys.stderr.write( "ERROR: No/Unexpected response from " + radio + " on " + serialport + "\n" )
-        logger.warning( "No/Unexpected response from " + radio + " on " + serialport )
+        ctypes.windll.user32.MessageBoxW(0, "No/Unexpected response from " + radio + " on " + serialport, "Icom TimeSync", 1)
         exit(2)
 
     if radio == "7100":
@@ -352,11 +319,9 @@ def main():
     ser.close()
 
     if ExitCode == 0:
-        print( "Ok" )
-        logger.info( "DateTime set on " + radio )
+        ctypes.windll.user32.MessageBoxW(0, "Sucessfully set DateTime on " + radio, "Icom TimeSync", 0)
     else:
-        sys.stderr.write( "ERROR: No/Unexpected reponse from Radio\n" )
-        logger.warning( "No/Unexpected response from " + radio + " on " + serialport )
+        ctypes.windll.user32.MessageBoxW(0, "No/Unexpected response from " + radio + " on " + serialport, "Icom TimeSync", 0)
 
     exit(ExitCode)
 
