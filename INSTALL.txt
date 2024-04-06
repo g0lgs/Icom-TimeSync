@@ -2,6 +2,10 @@
 # Icom-7300-TimeSync 
 # Installation and Configuration
 
+The main instructions are for Linux, if you want to use the Program in Windows then look below 
+for 'Windows Installation Procedure'
+
+
 You will need the python3 pyserial library - if that is not installed you need to install it for the user
 that you are using the script as ('root' if you are running it from the udev rules) - consult you OS Docs
 
@@ -30,17 +34,20 @@ Then edit the following lines in each script:
 
 	radio="7100"
 	radiociv="0x88"
-	baudrate = 115200				# Baud Rate
+	baud = 115200				# Baud Rate
+
 	serialport = "/dev/ttyUSB0"		# Serial port of your radios serial interface.
 
 	radio="7300"
 	radiociv="0x94"
-	baudrate = 115200				# Baud Rate
+	baud = 115200				# Baud Rate
+
 	serialport = "/dev/ttyUSB0"		# Serial port of your radios serial interface.
 
 	radio="9700"
 	radiociv="0xA2"
-	baudrate = 115200				# Baud Rate
+	baud = 115200				# Baud Rate
+
 	serialport = "/dev/ttyUSB0"		# Serial port of your radios serial interface.
 
 Instead of /dev/ttyUSB0 etc you can set a serial port by id so that it always connect to the correct radio
@@ -125,6 +132,81 @@ If the radio is connected but not switched on then (after a short delay) the log
 
 Turn the radio on and then disconnect and re-connect its USB to try again
 
+
+Windows Installation Procedure
+------------------------------
+
+You will need a recent version of Python for Windows
+
+Go to https://www.python.org/downloads/ to download the Latest Python Version for Windows
+
+Open the Installer
+
+	On the Initial Screen select Customize Installation
+
+	Ensure that the follow options are enabled:
+		
+		'pip'
+		'for all users'
+		'py launcher'
+
+	(Other options may be deselected if desired)
+
+	Click Next
+
+	Select
+
+		'Install Pythox X.XX for all users'
+		'Add Python for environment variables'
+
+	Click Install
+
+	Click Yes (when prompted) about making changes.
+
+	when 'Steup was sucessful' appears Click Close
+
+When the Installation is Complete Open a command prompt
+
+	Enter the command:
+
+	pip install pyserial
+
+Now download the 'Set-Icom-DateTime.py' from this Git Repositry and save it to Your desktop
+
+After Downloading open the file in your prefered Text Editor (i.e Notepad++)
+
+Change the Settings around lines 24 to 35 to set the appropriate values for your radio
+
+	The ones you need to set are:
+	
+	radio, radiociv, baud and serialport
+
+	it is only necessary to change com3 to whatever you comport (not the "/dev/ttyUSB0" version)
+
+	# Set Radio Model (7100/7300/9700)
+	radio="9700"
+	# Radio address (7100= 0x88, 7300 = 0x94, 9700 = 0xA2).
+	radiociv="0xa2"
+	# Radio serial speed
+	baud = 115200
+
+	# Serial port of your radios serial interface
+	# i.e Linux /dev/ttyUSB0 or Windows com1
+	if os.name == 'nt':
+	    serialport = "com3"
+	    import ctypes
+	else:
+	    serialport = "/dev/ttyUSB0"
+	    import logging
+	    from logging.handlers import SysLogHandler
+
+	Save the file
+
+	Now just double-click the File on the Desktop to set the time on the Radio
+
+If you have 2 or more radio's just save the file with different names and edit the settings in each one.
+
+
 -------------
 Stewart G0LGS
-Feb 2024
+Apr 2024
