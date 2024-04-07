@@ -2,15 +2,20 @@
 # Icom-7300-TimeSync 
 # Installation and Configuration
 
-The main instructions are for Linux, if you want to use the Program in Windows then look below 
-for 'Windows Installation Procedure'
+If you want to use this Program in Windows then look below for 'Windows Installation Procedure'
 
+##################
+
+Linux Installation
+------------------
 
 You will need the python3 pyserial library - if that is not installed you need to install it for the user
-that you are using the script as ('root' if you are running it from the udev rules) - consult you OS Docs
+that you are using the script as ('root' if you are running it from the udev rules):
 
-Suggested Installation Procedure
---------------------------------
+	pip3 install pyserial
+
+or
+	sudo pip3 install pyserial
 
 cd ~
 mkdir -p ~/git
@@ -38,18 +43,6 @@ Then edit the following lines in each script:
 
 	serialport = "/dev/ttyUSB0"		# Serial port of your radios serial interface.
 
-	radio="7300"
-	radiociv="0x94"
-	baud = 115200				# Baud Rate
-
-	serialport = "/dev/ttyUSB0"		# Serial port of your radios serial interface.
-
-	radio="9700"
-	radiociv="0xA2"
-	baud = 115200				# Baud Rate
-
-	serialport = "/dev/ttyUSB0"		# Serial port of your radios serial interface.
-
 Instead of /dev/ttyUSB0 etc you can set a serial port by id so that it always connect to the correct radio
 which is usefeul if you have more than one usb serial port connected (or see below on using udev)
 
@@ -60,6 +53,17 @@ or
 You can now run the script directly like:
 
 	/usr/local/bin/Set-Icom7300-DateTime.py
+
+
+Alternative to Editing the Script
+---------------------------------
+
+Instead of editing the script for each radio it now takes parameters for each of the options, you can
+use long or short options:
+
+	./Set-Icom-DateTime.py --radio 9700 --civ 0xA2 --port /dev/ttyUSB0 --baud 115200 --localtime
+
+	./Set-Icom-DateTime.py -r 9700 -c 0xA2 -p /dev/ttyUSB0 -b 115200 -l
 
 
 Using udev to run the script automatically
@@ -133,6 +137,8 @@ If the radio is connected but not switched on then (after a short delay) the log
 Turn the radio on and then disconnect and re-connect its USB to try again
 
 
+################################################################################################
+
 Windows Installation Procedure
 ------------------------------
 
@@ -196,9 +202,29 @@ Change the Settings around lines 20 to 28 to set the appropriate values for your
 	Now just double-click the File on the Desktop to set the time on the Radio
 
 
-	You can also configure Windows to autorun the script at login:
+	Alternative to Editing the Script
+	---------------------------------
 
-		Right Click the Desktop Icon for the .pyw file and select Copy as Path
+	Instead of editing the script for each radio it also takes parameters for each of the options, you can
+	use long or short options:
+
+		Set-Icom-DateTime-Windows.py --radio 9700 --civ 0xA2 --port /dev/ttyUSB0 --baud 115200 --localtime --noprompt
+	
+		Set-Icom-DateTime-Windows.py -r 9700 -c 0xA2 -p /dev/ttyUSB0 -b 115200 -l -n
+
+	or
+		Set-Icom-DateTime-Windows.pyw --radio 9700 --civ 0xA2 --port /dev/ttyUSB0 --baud 115200 --localtime --noprompt
+	
+		Set-Icom-DateTime-Windows.pyw -r 9700 -c 0xA2 -p /dev/ttyUSB0 -b 115200 -l -n
+
+	Without the the -n or --noprompt the script will prompt (via a pop-up dialog box) that you are ready to set the radio,
+	this is perhaps most useful when creating a desktop shortcut.
+
+
+	Configure Windows to auto-run the script at login
+	-------------------------------------------------
+
+		Right click the Desktop Icon (or where-ever you saved the the .pyw file) and select 'Copy as Path'
 
 		Press Windows+R ,then in the box type 
 
@@ -212,13 +238,24 @@ Change the Settings around lines 20 to 28 to set the appropriate values for your
 
 		Add a Space and Press Ctrl-V
 
-		Click Next 
+		Add any of the command-line options you wish to use
+
+		Click Next
 
 		Enter a Suitable Name (i.e Set 7300 Time)
 
 
-	If you have 2 or more radio's repeat the same process using different names and edit the settings for each one.
+		My command lines for these look like:
 
+			"C:\Program Files\Python312\pythonw.exe" "D:\Scripts\Icom-7300-TimeSync\Set-Icom-DateTime-Windows.pyw" --radio 7300 --port com5 --civ 0x94 --baud 115200
+	
+			"C:\Program Files\Python312\pythonw.exe" "D:\Scripts\Icom-7300-TimeSync\Set-Icom-DateTime-Windows.pyw" --radio 9700 --port com3 --civ 0xa2 --baud 115200
+
+
+		As these may start before I have turned on the Shack PSU's or radios I do not use the '--noprompt' option, but my equivalent Desktop Shorcuts do.
+
+
+		If you have 2 or more radio's repeat the same process using different Short-cut names with appropriate settings for each one.
 
 -------------
 Stewart G0LGS

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) Stewart Wilkinson (G0LGS)
-# Re-worked for Windows 06/04/2024
+# Copyright (c) 2024 Stewart Wilkinson (G0LGS)
 
 # Set Date/Time on Icom 7100/7300/9700 radio
 #
@@ -50,6 +49,10 @@ myciv="0xc0"
 
 # **** Nothing below should need to be changed ****
 debug=False
+
+IsPYW=False
+if ".pyw" in sys.argv[0]:
+    IsPYW=True
 
 def sendcmd(ser,cmd):
     count = 0
@@ -231,18 +234,25 @@ def main(argv):
     global UseLocalTime
     global debug
 
+    NoPrompt=False
+
     try:
-        opts, args = getopt.getopt(argv,"?hr:c:p:b:ld",["help","debug","radio=","civ=","port=","baud=","localtime"])
+        opts, args = getopt.getopt(argv,"?hr:c:p:b:ldn",["help","debug","radio=","civ=","port=","baud=","localtime","noprompt"])
 
     except getopt.GetoptError as Err:
-        print (Err)
-        Usage()
+        if IsPYW:
+            ctypes.windll.user32.MessageBoxW(0, str(Err), "Icom TimeSync " +radio, 16)
+        else:
+            print( Err )
         sys.exit(2)
 
     for opt, arg in opts:
         if opt in ("-?", "-h", "--help"):
             Usage()
             sys.exit()
+
+        elif opt in ("-n", "--noprompt"):
+            NoPrompt=True
 
         elif opt in ("-d", "--debug"):
             debug=True
@@ -253,7 +263,10 @@ def main(argv):
         elif opt in ("-r", "--radio"):
             radio = arg
             if ( radio not in Radios ):
-                print ( f'Sorry Radio ({radio}) is not valid (acceptable are {Radios})' )
+                if IsPYW:
+                    ctypes.windll.user32.MessageBoxW(0, f'Sorry Radio ({radio}) is not valid (acceptable are {Radios})', "Icom TimeSync " +radio, 16)
+                else:
+                    print ( f'Sorry Radio ({radio}) is not valid (acceptable are {Radios})' )
                 sys.exit()
 
         elif opt in ("-c", "--civ"):
@@ -261,14 +274,23 @@ def main(argv):
             try:
                 civ = int(radiociv, 16)
             except ValueError:
-                print ( f'Sorry CIV Address ({radiociv}) is not valid Hex' )
+                if IsPYW:
+                    ctypes.windll.user32.MessageBoxW(0, f'Sorry CIV Address ({radiociv}) is not valid Hex', "Icom TimeSync " +radio, 16)
+                else:
+                    print ( f'Sorry CIV Address ({radiociv}) is not valid Hex' )
                 sys.exit()
             else:
                 if civ > 255:
-                    print ( f'Sorry CIV Address ({radiociv}) is out of range (0x00 to 0xff)' )
+                    if IsPYW:
+                        ctypes.windll.user32.MessageBoxW(0, f'Sorry CIV Address ({radiociv}) is out of range (0x00 to 0xff)', "Icom TimeSync " +radio, 16)
+                    else:
+                        print ( f'Sorry CIV Address ({radiociv}) is out of range (0x00 to 0xff)' )
                     sys.exit()
                 if civ == int(myciv, 16):
-                    print ( f'Sorry CIV Address ({radiociv}) is reserved (controller)' )
+                    if IsPYW:
+                        ctypes.windll.user32.MessageBoxW(0, f'Sorry CIV Address ({radiociv}) is reserved (controller)', "Icom TimeSync " +radio, 16)
+                    else:
+                        print ( f'Sorry CIV Address ({radiociv}) is reserved (controller)' )
                     sys.exit()
 
         elif opt in ("-p", "--port"):
@@ -280,40 +302,61 @@ def main(argv):
                 baud=int(baud)
 
             except ValueError:
-                print ( f'Sorry Baud-rate ({baud}) is not valid number' )
+                if IsPYW:
+                    ctypes.windll.user32.MessageBoxW(0, f'Sorry Baud-rate ({baud}) is not valid number', "Icom TimeSync " +radio, 16)
+                else:
+                    print ( f'Sorry Baud-rate ({baud}) is not valid number' )
                 sys.exit()
 
             else:
                 if baud not in Bauds:
-                    print ( f'Sorry Baud-rate ({baud}) is not valid (acceptable rates are {Bauds})' )
+                    if IsPYW:
+                        ctypes.windll.user32.MessageBoxW(0, f'Sorry Baud-rate ({baud}) is not valid (acceptable rates are {Bauds})', "Icom TimeSync " +radio, 16)
+                    else:
+                        print ( f'Sorry Baud-rate ({baud}) is not valid (acceptable rates are {Bauds})' )
                     sys.exit()
 
     # Additional Checks (in case Script Defaults have been broken)
     if radio not in Radios:
-        sys.stderr.write( "ERROR: Unsupported radio: " + radio +"\n" )
-        logger.warning( "Unsupported radio: " + radio )
+        if IsPYW:
+            ctypes.windll.user32.MessageBoxW(0, f'Sorry Radio ({radio}) is not valid (acceptable are {Radios})', "Icom TimeSync " +radio, 16)
+        else:
+            print ( f'Sorry Radio ({radio}) is not valid (acceptable are {Radios})' )
         sys.exit(1)
 
     if baud not in Bauds:
-        print ( f'Sorry Baud-rate ({baud}) is not valid (acceptable rates are {Bauds})' )
+        if IsPYW:
+            ctypes.windll.user32.MessageBoxW(0, f'', "Icom TimeSync " +radio, 16)
+        else:
+            print ( f'Sorry Baud-rate ({baud}) is not valid (acceptable rates are {Bauds})' )
         sys.exit()
 
     try:
         civ = int(radiociv, 16)
     except ValueError:
-        print ( f'Sorry CIV Address ({radiociv}) is not valid Hex' )
+        if IsPYW:
+            ctypes.windll.user32.MessageBoxW(0, f'', "Icom TimeSync " +radio, 16)
+        else:
+            print ( f'Sorry CIV Address ({radiociv}) is not valid Hex' )
         sys.exit()
     else:
         if civ > 255:
-            print ( f'Sorry CIV Address ({radiociv}) is out of range (0x00 to 0xff)' )
+            if IsPYW:
+                ctypes.windll.user32.MessageBoxW(0, f'', "Icom TimeSync " +radio, 16)
+            else:
+                print ( f'Sorry CIV Address ({radiociv}) is out of range (0x00 to 0xff)' )
             sys.exit()
         if civ == int(myciv, 16):
-            print ( f'Sorry CIV Address ({radiociv}) is reserved (controller)' )
+            if IsPYW:
+                ctypes.windll.user32.MessageBoxW(0, f'', "Icom TimeSync " +radio, 16)
+            else:
+                print ( f'Sorry CIV Address ({radiociv}) is reserved (controller)' )
             sys.exit()
 
-    res = ctypes.windll.user32.MessageBoxW(0, "Are you ready to set Date/Time on " + radio, "Icom TimeSync " + radio, 36)
-    if res == 7: # No Button
-        sys.exit(1)
+    if NoPrompt==False:
+        res = ctypes.windll.user32.MessageBoxW(0, "Are you ready to set Date/Time on " + radio, "Icom TimeSync " + radio, 36)
+        if res == 7: # No Button
+            sys.exit(1)
 
     # Exit Code
     ExitCode=0
@@ -336,7 +379,10 @@ def main(argv):
         ser = serial.Serial(port=serialport, baudrate=baud, bytesize=8, parity='N', stopbits=1, timeout=2, xonxoff=0, rtscts=0)
 
     except serial.SerialException as serErr:
-        ctypes.windll.user32.MessageBoxW(0, str(serErr), "Icom TimeSync", 16)
+        if IsPYW:
+            ctypes.windll.user32.MessageBoxW(0, str(serErr) + "\n\n(The port may already be in use)", "Icom TimeSync", 16)
+        else:
+            print( str(serErr) + "\n(The port may already be in use)" )
         sys.exit(1)
 
     print ("Testing radio communications")
@@ -380,7 +426,10 @@ def main(argv):
         print( "Ok - Got response from " + radio )
     else:
         ser.close()
-        ctypes.windll.user32.MessageBoxW(0, "No/Unexpected response from " + radio + " on " + serialport, "Icom TimeSync " + radio, 17)
+        if IsPYW:
+            ctypes.windll.user32.MessageBoxW(0, "No/Unexpected response from " + radio + " on " + serialport, "Icom TimeSync " + radio, 17)
+        else:
+            print( "No/Unexpected response from " + radio + " on " + serialport )
         sys.exit(2)
 
     if radio == "7100":
@@ -413,9 +462,15 @@ def main(argv):
     ser.close()
 
     if ExitCode == 0:
-        ctypes.windll.user32.MessageBoxW(0, "Sucessfully set DateTime on " + radio, "Icom TimeSync " + radio, 64)
+        if IsPYW:
+            ctypes.windll.user32.MessageBoxW(0, "Sucessfully set DateTime on " + radio, "Icom TimeSync " + radio, 64)
+        else:
+            print( "Sucessfully set DateTime on " + radio)
     else:
-        ctypes.windll.user32.MessageBoxW(0, "No/Unexpected response from " + radio + " on " + serialport, "Icom TimeSync " + radio, 16)
+        if IsPYW:
+            ctypes.windll.user32.MessageBoxW(0, "No/Unexpected response from " + radio + " on " + serialport, "Icom TimeSync " + radio, 16)
+        else:
+            print( "No/Unexpected response from " + radio + " on " + serialport )
 
     sys.exit(ExitCode)
 
