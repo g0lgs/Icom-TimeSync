@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# Copyright (c) Stewart Wilkinson (G0LGS)
+# Copyright (c) 2024 Stewart Wilkinson (G0LGS)
 # Created 07-Feb-2024
 
 # Set Date/Time on Icom 7100/7300/9700 radio
