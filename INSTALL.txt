@@ -1,5 +1,5 @@
 
-# Icom-7300-TimeSync 
+# Icom TimeSync 
 # Installation and Configuration
 
 If you want to use this Program in Windows then look below for 'Windows Installation Procedure'
@@ -29,10 +29,12 @@ i.e
 
 	sudo cp Set-Icom-DateTime.py /usr/local/bin/Set-Icom7100-DateTime.py
 	sudo cp Set-Icom-DateTime.py /usr/local/bin/Set-Icom7300-DateTime.py
+	sudo cp Set-Icom-DateTime.py /usr/local/bin/Set-Icom7610-DateTime.py
 	sudo cp Set-Icom-DateTime.py /usr/local/bin/Set-Icom9700-DateTime.py
 
 	sudo chmod +x /usr/local/bin/Set-Icom7100-DateTime.py
 	sudo chmod +x /usr/local/bin/Set-Icom7300-DateTime.py
+	sudo chmod +x /usr/local/bin/Set-Icom7610-DateTime.py
 	sudo chmod +x /usr/local/bin/Set-Icom9700-DateTime.py
 
 Then edit the following lines in each script:

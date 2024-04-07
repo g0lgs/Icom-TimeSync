@@ -2,7 +2,7 @@
 
 # Copyright (c) 2024 Stewart Wilkinson (G0LGS)
 
-# Set Date/Time on Icom 7100/7300/9700 radio
+# Set Date/Time on Icom 7100/7300/7610/9700 radio
 #
 # This script sets the time slightly wrong because you cannot set seconds, only minutes.
 # I prefer to set time a little incorrectly rather than to wait for up to 59 seconds
@@ -19,9 +19,9 @@ if platform.system() != 'Windows':
     sys.exit(1)
 
 # Default Values (pass command line options or edit here to suit)
-# Set Radio Model (7100/7300/9700)
+# Set Radio Model (7100/7300/7610/9700)
 radio="7300"
-# Radio address (7100= 0x88, 7300 = 0x94, 9700 = 0xA2).
+# Radio address (7100= 0x88, 7300 = 0x94, 7610 = 0x98, 9700 = 0xA2).
 radiociv="0x94"
 # Radio serial speed
 baud = 115200
@@ -41,7 +41,7 @@ import ctypes
 UseLocalTime=False
 
 # Supported Radios and Baud Rates
-Radios="7100 7300 9700"
+Radios=[7100,7300,7610,9700]
 Bauds=[4800,9600,19200,38400,57600,115200]
 
 # Address for the 'controller' (this script) - change only if you have a conflict with one of your radios
@@ -188,6 +188,38 @@ def ic7300_set_time(ser):
     if debug: print ("Setting Time")
     sendcmd(ser,cmd)
 
+# 7610 Time / Date Functions
+def ic7610_get_date(ser):
+    cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x1A", "0x05", "0x01", "0x58", "0xFD" ]
+    sendcmd(ser,cmd)
+
+def ic7610_set_date(ser):
+    global year
+    global month
+    global day
+    cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x1A", "0x05", "0x01", "0x58" ]
+    cmd.append("0x"+year[0:2])
+    cmd.append("0x"+year[2:])
+    cmd.append("0x"+month)
+    cmd.append("0x"+day)
+    cmd.append("0xFD")
+    if debug: print ("Setting Date")
+    sendcmd(ser,cmd)
+
+def ic7610_get_time(ser):
+    cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x1A", "0x05", "0x01", "0x59", "0xFD" ]
+    sendcmd(ser,cmd)
+
+def ic7610_set_time(ser):
+    global hour
+    global minute
+    cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x1A", "0x05", "0x01", "0x59" ]
+    cmd.append("0x"+hour)
+    cmd.append("0x"+minute)
+    cmd.append("0xFD")
+    if debug: print ("Setting Time")
+    sendcmd(ser,cmd)
+
 # 9700 Time / Date Functions
 def ic9700_get_date(ser):
     cmd = [ "0xFE", "0xFE", radiociv, myciv, "0x1A", "0x05", "0x01", "0x79", "0xFD"]
@@ -262,12 +294,20 @@ def main(argv):
 
         elif opt in ("-r", "--radio"):
             radio = arg
-            if ( radio not in Radios ):
-                if IsPYW:
-                    ctypes.windll.user32.MessageBoxW(0, f'Sorry Radio ({radio}) is not valid (acceptable are {Radios})', "Icom TimeSync " +radio, 16)
-                else:
-                    print ( f'Sorry Radio ({radio}) is not valid (acceptable are {Radios})' )
+            try:
+                radNo=int(radio)
+
+            except ValueError:
+                print ( f'Sorry Radio ({radio}) is not valid (acceptable are {Radios})' )
                 sys.exit()
+
+            else:
+                if ( radNo not in Radios ):
+                    if IsPYW:
+                        ctypes.windll.user32.MessageBoxW(0, f'Sorry Radio ({radio}) is not valid (acceptable are {Radios})', "Icom TimeSync " +radio, 16)
+                    else:
+                        print ( f'Sorry Radio ({radio}) is not valid (acceptable are {Radios})' )
+                    sys.exit()
 
         elif opt in ("-c", "--civ"):
             radiociv = arg
@@ -317,19 +357,27 @@ def main(argv):
                     sys.exit()
 
     # Additional Checks (in case Script Defaults have been broken)
-    if radio not in Radios:
-        if IsPYW:
-            ctypes.windll.user32.MessageBoxW(0, f'Sorry Radio ({radio}) is not valid (acceptable are {Radios})', "Icom TimeSync " +radio, 16)
-        else:
-            print ( f'Sorry Radio ({radio}) is not valid (acceptable are {Radios})' )
+    try:
+        radNo=int(radio)
+
+    except ValueError:
+        print ( f'Sorry Radio ({radio}) is not valid (acceptable are {Radios})' )
         sys.exit(1)
+
+    else:
+        if ( radNo not in Radios ):
+            if IsPYW:
+                ctypes.windll.user32.MessageBoxW(0, f'Sorry Radio ({radio}) is not valid (acceptable are {Radios})', "Icom TimeSync " +radio, 16)
+            else:
+                print ( f'Sorry Radio ({radio}) is not valid (acceptable are {Radios})' )
+            sys.exit(1)
 
     if baud not in Bauds:
         if IsPYW:
             ctypes.windll.user32.MessageBoxW(0, f'', "Icom TimeSync " +radio, 16)
         else:
             print ( f'Sorry Baud-rate ({baud}) is not valid (acceptable rates are {Bauds})' )
-        sys.exit()
+        sys.exit(1)
 
     try:
         civ = int(radiociv, 16)
@@ -380,7 +428,7 @@ def main(argv):
 
     except serial.SerialException as serErr:
         if IsPYW:
-            ctypes.windll.user32.MessageBoxW(0, str(serErr) + "\n\n(The port may already be in use)", "Icom TimeSync", 16)
+            ctypes.windll.user32.MessageBoxW(0, str(serErr) + "\n\n(The port may already be in use)", "Icom TimeSync "+ radio, 16)
         else:
             print( str(serErr) + "\n(The port may already be in use)" )
         sys.exit(1)
@@ -447,6 +495,15 @@ def main(argv):
                 ExitCode=3
             else:
                 ic7300_set_time(ser)
+                if not CheckAck(ser):
+                    ExitCode=4
+
+    elif radio == "7610":
+            ic7610_set_date(ser)
+            if not CheckAck(ser):
+                ExitCode=3
+            else:
+                ic7610_set_time(ser)
                 if not CheckAck(ser):
                     ExitCode=4
 
