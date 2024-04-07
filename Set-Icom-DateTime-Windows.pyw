@@ -218,7 +218,11 @@ def main():
     global minute
 
     if not radio in ['7100', '7300', '9700']:
-        ctypes.windll.user32.MessageBoxW(0, "Unsupported radio: " + radio, "Icom TimeSync", 0)
+        ctypes.windll.user32.MessageBoxW(0, "Unsupported radio: " + radio, "Icom TimeSync", 16)
+        exit(1)
+
+    res = ctypes.windll.user32.MessageBoxW(0, "Are you ready to set Date/Time on " + radio, "Icom TimeSync " + radio, 36)
+    if res == 7: # No Button
         exit(1)
 
     # Exit Code
@@ -242,7 +246,7 @@ def main():
         ser = serial.Serial(port=serialport, baudrate=baud, bytesize=8, parity='N', stopbits=1, timeout=2, xonxoff=0, rtscts=0)
 
     except serial.SerialException as serErr:
-        ctypes.windll.user32.MessageBoxW(0, str(serErr), "Icom TimeSync", 0)
+        ctypes.windll.user32.MessageBoxW(0, str(serErr), "Icom TimeSync", 16)
         exit(1)
 
     print ("Testing radio communications")
@@ -286,7 +290,7 @@ def main():
         print( "Ok - Got response from " + radio )
     else:
         ser.close()
-        ctypes.windll.user32.MessageBoxW(0, "No/Unexpected response from " + radio + " on " + serialport, "Icom TimeSync", 1)
+        ctypes.windll.user32.MessageBoxW(0, "No/Unexpected response from " + radio + " on " + serialport, "Icom TimeSync " + radio, 17)
         exit(2)
 
     if radio == "7100":
@@ -319,9 +323,9 @@ def main():
     ser.close()
 
     if ExitCode == 0:
-        ctypes.windll.user32.MessageBoxW(0, "Sucessfully set DateTime on " + radio, "Icom TimeSync", 0)
+        ctypes.windll.user32.MessageBoxW(0, "Sucessfully set DateTime on " + radio, "Icom TimeSync " + radio, 64)
     else:
-        ctypes.windll.user32.MessageBoxW(0, "No/Unexpected response from " + radio + " on " + serialport, "Icom TimeSync", 0)
+        ctypes.windll.user32.MessageBoxW(0, "No/Unexpected response from " + radio + " on " + serialport, "Icom TimeSync " + radio, 16)
 
     exit(ExitCode)
 

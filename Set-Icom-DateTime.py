@@ -2,7 +2,6 @@
 
 # Copyright (c) Stewart Wilkinson (G0LGS)
 # Created 07-Feb-2024
-# Updated 10-Feb-2024
 
 # Set Date/Time on Icom 7100/7300/9700 radio
 #
@@ -15,7 +14,7 @@
 import platform
 
 if platform.system() != 'Linux':
-    print("Sorry: This Version only works in Linux - Use 'Set-Icom-DateTime-Windows.py' for use in Windows")
+    print("Sorry: This Version only works in Linux - Use 'Set-Icom-DateTime-Windows.pyw' for use in Windows")
     input("Press Enter to exit...")
     exit(1)
 

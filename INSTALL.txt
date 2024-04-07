@@ -171,17 +171,16 @@ When the Installation is Complete Open a command prompt
 
 	pip install pyserial
 
-Now download the 'Set-Icom-DateTime-Windows.py' from this Git Repositry and save it to Your desktop
+Now download the 'Set-Icom-DateTime-Windows.pyw' from this Git Repositry and save it to your desktop
+(or some other location if you prefer)
 
-After Downloading open the file in your prefered Text Editor (i.e Notepad++)
+After downloading open the file in your prefered Text Editor (i.e Notepad++)
 
-Change the Settings around lines 24 to 35 to set the appropriate values for your radio
+Change the Settings around lines 20 to 28 to set the appropriate values for your radio
 
 	The ones you need to set are:
 	
 	radio, radiociv, baud and serialport
-
-	it is only necessary to change com3 to whatever you comport (not the "/dev/ttyUSB0" version)
 
 	# Set Radio Model (7100/7300/9700)
 	radio="9700"
@@ -189,22 +188,36 @@ Change the Settings around lines 24 to 35 to set the appropriate values for your
 	radiociv="0xa2"
 	# Radio serial speed
 	baud = 115200
-
-	# Serial port of your radios serial interface
-	# i.e Linux /dev/ttyUSB0 or Windows com1
-	if os.name == 'nt':
-	    serialport = "com3"
-	    import ctypes
-	else:
-	    serialport = "/dev/ttyUSB0"
-	    import logging
-	    from logging.handlers import SysLogHandler
+    # Serial port of your radios serial interface (i.e com3)
+	serialport = "com3"
 
 	Save the file
 
 	Now just double-click the File on the Desktop to set the time on the Radio
 
-If you have 2 or more radio's just save the file with different names and edit the settings in each one.
+
+	You can also configure Windows to autorun the script at login:
+
+		Right Click the Desktop Icon for the .pyw file and select Copy as Path
+
+		Press Windows+R ,then in the box type 
+
+			shell:startup
+
+		Click Ok
+
+		Right Click in the Window and Select New -> Shortcut then Click Browse
+
+		Navigate to the C:\Program Files\PythonXXX Folder and Select pythonw.exe
+
+		Add a Space and Press Ctrl-V
+
+		Click Next 
+
+		Enter a Suitable Name (i.e Set 7300 Time)
+
+
+	If you have 2 or more radio's repeat the same process using different names and edit the settings for each one.
 
 
 -------------
