@@ -11,19 +11,21 @@
 # You will need the following libs:
 #    pyserial
 
+import sys
 import platform
 
 if platform.system() != 'Linux':
-    print("Sorry: This Version only works in Linux - Use 'Set-Icom-DateTime-Windows.pyw' for use in Windows")
+    print("Sorry: This Version only works in Linux - Use 'Set-Icom-DateTime-Windows.pyw' for Windows")
     input("Press Enter to exit...")
-    exit(1)
+    sys.exit(1)
 
+# Default Values (pass command line options or edit here to suit)
 # Set Radio Model (7100/7300/9700)
 radio="9700"
 # Radio address (7100= 0x88, 7300 = 0x94, 9700 = 0xA2).
 radiociv="0xa2"
 # Radio serial speed
-baudrate = 115200
+baud = 115200
 # Serial port of your radios serial interface (often /dev/ttyUSB0)
 serialport = "/dev/ttyUSB0"
 
@@ -39,18 +41,21 @@ UseLocalTime=False
 # Address for the 'controller' (this script) - change only if you have a conflict with one of your radios
 myciv="0xc0"
 
+# Supported Radios / Baud Rates
+Radios="7100 7300 9700"
+Bauds=[4800,9600,19200,38400,57600,115200]
+
 # **** Nothing below should need to be changed ****
-debug=0
+debug=False
 
 # Import libraries we'll need to use
 import os
-import sys
+import getopt
 import time
 import serial
 import struct
 import logging
 from logging.handlers import SysLogHandler
-
 
 def sendcmd(ser,cmd):
     count = 0
@@ -66,25 +71,25 @@ def sendcmd(ser,cmd):
 def GetResp(ser):
     s = ''
     while s != b'\xFE':
-        if debug : print( "Waiting for sync...." + ''.join("{:02x}".format(x) for x in s) )
+        if debug: print( "Waiting for sync...." + ''.join("{:02x}".format(x) for x in s) )
         s = ser.read()
         # Timeout?
         if len(s) == 0:
             break;
 
     if ser.read() == b'\xFE':
-        if debug : print( "Synced, packet info :")
+        if debug: print( "Synced, packet info :")
         i = 0
         rxdata = []
         while s != b'\xFD':
             s = ser.read()
             if  i == 0 :
-                if debug : print( "TO: " + ''.join(format(x, '02x') for x in s) )
+                if debug: print( "TO: " + ''.join(format(x, '02x') for x in s) )
             elif i == 1:
-                if debug : print( "FROM: " + ''.join(format(x, '02x') for x in s) )
+                if debug: print( "FROM: " + ''.join(format(x, '02x') for x in s) )
             else:
                 rxdata.append(s)
-                if debug : print( "Data: " + ''.join(format(x, '02x') for x in s) )
+                if debug: print( "Data: " + ''.join(format(x, '02x') for x in s) )
             i +=1
 
         rxdata.pop()
@@ -104,7 +109,7 @@ def CheckAck(ser):
 
         else:
             if dat[0] == b'\xfb':
-                if debug :
+                if debug:
                     print( "Got Ack: " +dat[0].hex() )
                 AckOk=1
 
@@ -216,13 +221,21 @@ def ic9700_set_time(ser):
     cmd.append("0xFD")
     sendcmd(ser,cmd)
 
+def Usage():
+    print ( "Usage: " + sys.argv[0] + "--radio <Radio_Model> --civ <Radio_CIV_Address> --port <Serial_Port> --baud <Baud_Rate> --localtime")
 
-def main():
+def main(argv):
     global year
     global month
     global day
     global hour
     global minute
+    global radio
+    global radiociv
+    global baud
+    global serialport
+    global UseLocalTime
+    global debug
 
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
@@ -234,13 +247,88 @@ def main():
     )
 
     handler.setFormatter(formatter)
-
     logger.addHandler(handler)
 
-    if not radio in ['7100', '7300', '9700']:
+    try:
+        opts, args = getopt.getopt(argv,"?hr:c:p:b:ld",["help","debug","radio=","civ=","port=","baud=","localtime"])
+
+    except getopt.GetoptError as Err:
+        print (Err)
+        Usage()
+        sys.exit(2)
+
+    for opt, arg in opts:
+
+        if opt in ("-?", "-h", "--help"):
+            Usage()
+            sys.exit()
+
+        elif opt in ("-d", "--debug"):
+            debug=True
+
+        elif opt in ("-l", "--localtime"):
+            UseLocalTime=True
+
+        elif opt in ("-r", "--radio"):
+            radio = arg
+            if radio not in Radios:
+                print ( f'Sorry Radio ({radio}) is not valid (acceptable are {Radios})' )
+                sys.exit()
+
+        elif opt in ("-c", "--civ"):
+            radiociv = arg
+            try:
+                civ = int(radiociv, 16)
+            except ValueError:
+                print ( f'Sorry CIV Address ({radiociv}) is not valid Hex' )
+                sys.exit()
+            else:
+                if civ > 255:
+                    print ( f'Sorry CIV Address ({radiociv}) is out of range (0x00 to 0xff)' )
+                    sys.exit()
+                if civ == int(myciv, 16):
+                    print ( f'Sorry CIV Address ({radiociv}) is reserved (controller)' )
+                    sys.exit()
+
+        elif opt in ("-p", "--port"):
+            serialport = arg
+
+        elif opt in ("-b", "--baud"):
+            baud = arg
+            try:
+                baud=int(baud)
+
+            except ValueError:
+                print ( f'Sorry Baud-rate ({baud}) is not valid number' )
+                sys.exit()
+
+            else:
+                if baud not in Bauds:
+                    print ( f'Sorry Baud-rate ({baud}) is not valid (acceptable rates are {Bauds})' )
+                    sys.exit()
+
+    # Additional Checks (in case Script Defaults have been broken)
+    if radio not in Radios:
         sys.stderr.write( "ERROR: Unsupported radio: " + radio +"\n" )
         logger.warning( "Unsupported radio: " + radio )
-        exit(1)
+        sys.exit(1)
+
+    if baud not in Bauds:
+        print ( f'Sorry Baud-rate ({baud}) is not valid (acceptable rates are {Bauds})' )
+        sys.exit()
+
+    try:
+        civ = int(radiociv, 16)
+    except ValueError:
+        print ( f'Sorry CIV Address ({radiociv}) is not valid Hex' )
+        sys.exit()
+    else:
+        if civ > 255:
+            print ( f'Sorry CIV Address ({radiociv}) is out of range (0x00 to 0xff)' )
+            sys.exit()
+        if civ == int(myciv, 16):
+            print ( f'Sorry CIV Address ({radiociv}) is reserved (controller)' )
+            sys.exit()
 
     # Exit Code
     ExitCode=0
@@ -260,23 +348,28 @@ def main():
     minute = str(t.tm_min).rjust(2,'0')
 
     try:
-        ser = serial.Serial(serialport, baudrate, bytesize=8, parity='N', stopbits=1, timeout=2, xonxoff=0, rtscts=0)
+        ser = serial.Serial(port=serialport, baudrate=baud, bytesize=8, parity='N', stopbits=1, timeout=2, xonxoff=0, rtscts=0)
 
-    except serial.SerialException as e:
-        if e.errno == 2:
+    except serial.SerialException as Err:
+        if Err.errno == 2:
             sys.stderr.write( "ERROR: No such port: " +serialport + "\n" )
             logger.warning( "No such port: " +serialport )
-            exit(1)
-        if e.errno == 16:
+            sys.exit(1)
+        if Err.errno == 16:
             sys.stderr.write( "ERROR: port: " +serialport + " busy\n" )
             logger.warning( "Port: " +serialport + " busy" )
-            exit(1)
+            sys.exit(1)
         else:
-            sys.stderr.write( "Unexpected error: "+ str(e.errno) + "\n" )
-            logger.warning( "Unexpected error: "+ str(e.errno) )
-            exit(1)
+            sys.stderr.write( "Unexpected error: "+ str(Err.errno) + "\n" )
+            logger.warning( "Unexpected error: "+ str(Err.errno) )
+            sys.exit(1)
 
-    if debug : print ("Testing radio communications")
+    except ValueError as Err:
+        print (Err)
+        logger.warning( Err )
+        sys.exit()
+
+    if debug: print ("Testing radio communications")
     # Try reading frequency
     get_frequency(ser)
 
@@ -294,14 +387,14 @@ def main():
         elif len(dat) > 2:
 
             if dat[0] == b'\x03':
-                if debug :
+                if debug:
                     print( "Got (03) :")
                     show_frequency(dat)
                 CmdOk=1
 
             # Ack
             elif dat[0] == b'\xfb':
-                if debug : print( "Got (FB) :")
+                if debug: print( "Got (FB) :")
                 CmdOk=1
 
             else:
@@ -319,7 +412,7 @@ def main():
         ser.close()
         sys.stderr.write( "ERROR: No/Unexpected response from " + radio + " on " + serialport + "\n" )
         logger.warning( "No/Unexpected response from " + radio + " on " + serialport )
-        exit(2)
+        sys.exit(2)
 
     if radio == "7100":
             ic7100_set_date(ser)
@@ -357,11 +450,11 @@ def main():
         sys.stderr.write( "ERROR: No/Unexpected reponse from Radio\n" )
         logger.warning( "No/Unexpected response from " + radio + " on " + serialport )
 
-    exit(ExitCode)
+    sys.exit(ExitCode)
 
 if __name__ == "__main__":
     try:
-        main()
+        main(sys.argv[1:])
 
     except KeyboardInterrupt:
         sys.stderr.write( "Interrupted\n" )

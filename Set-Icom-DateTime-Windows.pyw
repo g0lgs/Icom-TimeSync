@@ -11,13 +11,15 @@
 # You will need to install the following libs:
 #    pyserial
 
+import sys
 import platform
 
 if platform.system() != 'Windows':
     print("Sorry: This Version only works in Windows - Use 'Set-Icom-DateTime.py' for use in Linux")
     input("Press Enter to Exit...")
-    exit(1)
+    sys.exit(1)
 
+# Default Values (pass command line options or edit here to suit)
 # Set Radio Model (7100/7300/9700)
 radio="7300"
 # Radio address (7100= 0x88, 7300 = 0x94, 9700 = 0xA2).
@@ -30,7 +32,7 @@ serialport = "com5"
 
 # Import libraries we'll need to use
 import os
-import sys
+import getopt
 import time
 import serial
 import struct
@@ -38,6 +40,10 @@ import ctypes
 
 # Set to True for LocalTime instead of default GMT
 UseLocalTime=False
+
+# Supported Radios and Baud Rates
+Radios="7100 7300 9700"
+Bauds=[4800,9600,19200,38400,57600,115200]
 
 # Address for the 'controller' (this script) - change only if you have a conflict with one of your radios
 myciv="0xc0"
@@ -59,25 +65,25 @@ def sendcmd(ser,cmd):
 def GetResp(ser):
     s = ''
     while s != b'\xFE':
-        if debug : print( "Waiting for sync...." + ''.join("{:02x}".format(x) for x in s) )
+        if debug: print( "Waiting for sync...." + ''.join("{:02x}".format(x) for x in s) )
         s = ser.read()
         # Timeout?
         if len(s) == 0:
             break;
 
     if ser.read() == b'\xFE':
-        if debug : print( "Synced, packet info :")
+        if debug: print( "Synced, packet info :")
         i = 0
         rxdata = []
         while s != b'\xFD':
             s = ser.read()
             if  i == 0 :
-                if debug : print( "TO: " + ''.join(format(x, '02x') for x in s) )
+                if debug: print( "TO: " + ''.join(format(x, '02x') for x in s) )
             elif i == 1:
-                if debug : print( "FROM: " + ''.join(format(x, '02x') for x in s) )
+                if debug: print( "FROM: " + ''.join(format(x, '02x') for x in s) )
             else:
                 rxdata.append(s)
-                if debug : print( "Data: " + ''.join(format(x, '02x') for x in s) )
+                if debug: print( "Data: " + ''.join(format(x, '02x') for x in s) )
             i +=1
 
         rxdata.pop()
@@ -97,7 +103,7 @@ def CheckAck(ser):
 
         else:
             if dat[0] == b'\xfb':
-                if debug :
+                if debug:
                     print( "Got Ack: " +dat[0].hex() )
                 AckOk=1
 
@@ -209,21 +215,105 @@ def ic9700_set_time(ser):
     cmd.append("0xFD")
     sendcmd(ser,cmd)
 
+def Usage():
+    print ( "Usage: " + sys.argv[0] + "--radio <Radio_Model> --address <Radio_CIV_Address> --port <Serial_Port> --baud <Baud_Rate> --localtime")
 
-def main():
+def main(argv):
     global year
     global month
     global day
     global hour
     global minute
+    global radio
+    global radiociv
+    global baud
+    global serialport
+    global UseLocalTime
+    global debug
 
-    if not radio in ['7100', '7300', '9700']:
-        ctypes.windll.user32.MessageBoxW(0, "Unsupported radio: " + radio, "Icom TimeSync", 16)
-        exit(1)
+    try:
+        opts, args = getopt.getopt(argv,"?hr:c:p:b:ld",["help","debug","radio=","civ=","port=","baud=","localtime"])
+
+    except getopt.GetoptError as Err:
+        print (Err)
+        Usage()
+        sys.exit(2)
+
+    for opt, arg in opts:
+        if opt in ("-?", "-h", "--help"):
+            Usage()
+            sys.exit()
+
+        elif opt in ("-d", "--debug"):
+            debug=True
+
+        elif opt in ("-l", "--localtime"):
+            UseLocalTime=True
+
+        elif opt in ("-r", "--radio"):
+            radio = arg
+            if ( radio not in Radios ):
+                print ( f'Sorry Radio ({radio}) is not valid (acceptable are {Radios})' )
+                sys.exit()
+
+        elif opt in ("-c", "--civ"):
+            radiociv = arg
+            try:
+                civ = int(radiociv, 16)
+            except ValueError:
+                print ( f'Sorry CIV Address ({radiociv}) is not valid Hex' )
+                sys.exit()
+            else:
+                if civ > 255:
+                    print ( f'Sorry CIV Address ({radiociv}) is out of range (0x00 to 0xff)' )
+                    sys.exit()
+                if civ == int(myciv, 16):
+                    print ( f'Sorry CIV Address ({radiociv}) is reserved (controller)' )
+                    sys.exit()
+
+        elif opt in ("-p", "--port"):
+            serialport = arg
+
+        elif opt in ("-b", "--baud"):
+            baud = arg
+            try:
+                baud=int(baud)
+
+            except ValueError:
+                print ( f'Sorry Baud-rate ({baud}) is not valid number' )
+                sys.exit()
+
+            else:
+                if baud not in Bauds:
+                    print ( f'Sorry Baud-rate ({baud}) is not valid (acceptable rates are {Bauds})' )
+                    sys.exit()
+
+    # Additional Checks (in case Script Defaults have been broken)
+    if radio not in Radios:
+        sys.stderr.write( "ERROR: Unsupported radio: " + radio +"\n" )
+        logger.warning( "Unsupported radio: " + radio )
+        sys.exit(1)
+
+    if baud not in Bauds:
+        print ( f'Sorry Baud-rate ({baud}) is not valid (acceptable rates are {Bauds})' )
+        sys.exit()
+
+    try:
+        civ = int(radiociv, 16)
+    except ValueError:
+        print ( f'Sorry CIV Address ({radiociv}) is not valid Hex' )
+        sys.exit()
+    else:
+        if civ > 255:
+            print ( f'Sorry CIV Address ({radiociv}) is out of range (0x00 to 0xff)' )
+            sys.exit()
+        if civ == int(myciv, 16):
+            print ( f'Sorry CIV Address ({radiociv}) is reserved (controller)' )
+            sys.exit()
 
     res = ctypes.windll.user32.MessageBoxW(0, "Are you ready to set Date/Time on " + radio, "Icom TimeSync " + radio, 36)
     if res == 7: # No Button
-        exit(1)
+        sys.exit(1)
 
     # Exit Code
     ExitCode=0
@@ -247,7 +337,7 @@ def main():
 
     except serial.SerialException as serErr:
         ctypes.windll.user32.MessageBoxW(0, str(serErr), "Icom TimeSync", 16)
-        exit(1)
+        sys.exit(1)
 
     print ("Testing radio communications")
     # Try reading frequency
@@ -291,7 +381,7 @@ def main():
     else:
         ser.close()
         ctypes.windll.user32.MessageBoxW(0, "No/Unexpected response from " + radio + " on " + serialport, "Icom TimeSync " + radio, 17)
-        exit(2)
+        sys.exit(2)
 
     if radio == "7100":
             ic7100_set_date(ser)
@@ -327,11 +417,11 @@ def main():
     else:
         ctypes.windll.user32.MessageBoxW(0, "No/Unexpected response from " + radio + " on " + serialport, "Icom TimeSync " + radio, 16)
 
-    exit(ExitCode)
+    sys.exit(ExitCode)
 
 if __name__ == "__main__":
     try:
-        main()
+        main(sys.argv[1:])
 
     except KeyboardInterrupt:
         sys.stderr.write( "Interrupted\n" )
