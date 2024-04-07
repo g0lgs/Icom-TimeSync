@@ -144,7 +144,9 @@ Turn the radio on and then disconnect and re-connect its USB to try again
 Windows Installation Procedure
 ------------------------------
 
-You will need a recent version of Python for Windows
+You will need a recent version of Python for Windows.
+
+Please refer to the PDF for Windows 7
 
 Go to https://www.python.org/downloads/ to download the Latest Python Version for Windows
 
@@ -177,7 +179,9 @@ When the Installation is Complete Open a command prompt
 
 	Enter the command:
 
-	pip install pyserial
+	pip3 install pyserial --user
+
+	(Note the --user option is required for python 3.8.1 under Windows 7, but Pyton 3.12.2 on Windows 10 or 11 work without it)
 
 Now download the 'Set-Icom-DateTime-Windows.pyw' from this Git Repositry and save it to your desktop
 (or some other location if you prefer)
