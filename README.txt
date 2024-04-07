@@ -1,7 +1,9 @@
 
-# Icom-7300-TimeSync
+# Icom-TimeSync
 
-Script to set the Time on Icom 7100, 7300 and 9700 Radios 
+Script to set the Time on Icom 7100, 7300, 7610 and 9700 Radios 
+
+(Note: 7610 support is untested)
 
 Inspired by https://github.com/Kurgan-/icom-set-time
 
@@ -9,4 +11,4 @@ See INSTALL.txt for Installation instructions
 
 -------------
 Stewart G0LGS
-Feb 2024
+Apr 2024
