@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # Copyright (c) 2024 Stewart Wilkinson (G0LGS)
-# Ver: 1.0.6 07/04/2024
+# Ver: 1.0.7 08/04/2024
 
 # Set Date/Time on Icom 7100/7300/7610/9700 radio
 #
@@ -17,6 +17,11 @@ import platform
 if platform.system() != 'Linux':
     print("Sorry: This Version only works in Linux - Use 'Set-Icom-DateTime-Windows.pyw' for Windows")
     input("Press Enter to exit...")
+    sys.exit(1)
+
+MIN_PYTHON = (3, 6)
+if not sys.version_info >= MIN_PYTHON:
+    print("This script requires Python V3.6 or later")
     sys.exit(1)
 
 # Default Values (pass command line options or edit here to suit)
