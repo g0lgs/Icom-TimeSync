@@ -19,7 +19,7 @@ or
 
 cd ~
 mkdir -p ~/git
-git clone https://github.com/g0lgs/Icom-7300-TimeSync.git ~/git/Icom-7300-TimeSync
+git clone https://github.com/g0lgs/Icom-TimeSync.git ~/git/Icom-TimeSync
 cd ~/git/Icom-7300-TimeSync
 
 You can place a copy of the script for each radio in /usr/local/bin
@@ -153,7 +153,6 @@ If the radio is connected but not switched on then (after a short delay) the log
 
 Turn the radio on and then disconnect and re-connect its USB to try again
 
-
 ################################################################################################
 
 Windows Installation Procedure
@@ -282,6 +281,19 @@ Change the Settings around lines 20 to 28 to set the appropriate values for your
 		As these may start before I have turned on the Shack PSU's or radios I do not use the '--noprompt' option, but my equivalent Desktop Shorcuts do.
 
 		If you have 2 or more radio's repeat the same process using different Short-cut names with appropriate settings for each one.
+
+## Known Issues ##
+
+In some cases the radio (this may depend on Firmware Revision in use) may not accept the seconds value when the script tries to 
+set the time, if this appears to be the case then case search for _set_time function for your radio and changes the line:
+
+cmd.append("0x"+second)
+	
+to
+
+#cmd.append("0x"+second)
+
+This will mean that your radio will be up to 59 seconds behind, however that is much better than being at some random date/time.
 
 -------------
 Stewart G0LGS
