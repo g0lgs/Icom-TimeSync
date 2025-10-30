@@ -17,7 +17,7 @@ that you are using the script as ('root' if you are running it from the udev rul
 
 > [!WARNING]
 > These instructions really need updating to use the python Virtual Environment feature, to avoid
-> certian known issues with installing pip3 libraries.
+> certian known issues with installing pip3 libraries as 'root'.
 
 ```
 pip3 install pyserial
