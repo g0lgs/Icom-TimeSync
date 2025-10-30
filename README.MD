@@ -12,20 +12,10 @@ If you want to use these scripts in Windows then look below for 'Windows Install
 
 # Linux Installation
 
-You will need the python3 pyserial library - if that is not installed you need to install it for the user
-that you are using the script as ('root' if you are running it from the udev rules):
+> [!NOTE]
+> I really should fathom out a better way of dealing with a python virtual env, but this seems to work
 
-> [!WARNING]
-> These instructions really need updating to use the python Virtual Environment feature, to avoid
-> certian known issues with installing pip3 libraries as 'root'.
-
-```
-pip3 install pyserial
-```
-or (not recommended):
-```
-sudo pip3 install pyserial
-```
+Downlaod the code from GitHub:
 
 ```
 cd ~
@@ -33,7 +23,24 @@ mkdir -p ~/git
 git clone https://github.com/g0lgs/Icom-TimeSync.git ~/git/Icom-TimeSync
 cd ~/git/Icom-7300-TimeSync
 ```
-You can place a copy of the script for each radio in /usr/local/bin
+
+## Setting up Python Virtual Env
+```
+sudo apt install python3 python3-venv
+sudo python3 -m venv /opt/Icom-TimeSync/
+sudo /opt/Icom-TimeSync/bin/pip install --upgrade pip
+sudo /opt/Icom-TimeSync/bin/pip install -r requirements.txt
+```
+
+## Installing Icom-TimeSync
+
+Now change the first line of the 'Set-Icom-DateTime.py' Script from:
+
+	#!/usr/bin/python3
+to:
+	#/opt/Icom-TimeSync/bin/python3
+
+Now you can place a copy of the script for each radio in /usr/local/bin
 
 i.e
 ```
@@ -49,6 +56,7 @@ sudo chmod +x /usr/local/bin/Set-Icom7300-DateTime.py
 sudo chmod +x /usr/local/bin/Set-Icom7610-DateTime.py
 sudo chmod +x /usr/local/bin/Set-Icom9700-DateTime.py
 ```
+
 Then edit the following lines in each script:
 ```
 radio="7100"
@@ -57,7 +65,7 @@ baud = 115200					# Baud Rate
 serialport = "/dev/ttyUSB0"		# Serial port of your radios serial interface.
 UseLocalTime=False
 ```
-Ensure that all the lines are aligned to the left (i.e no extra spaces or TABs have been entered)
+Ensure that all the lines are aligned to the left (i.e no extra spaces or TABs have been entered) as this will break it!
 
 Instead of /dev/ttyUSB0 etc you can set a serial port by id so that it always connect to the correct radio which is usefeul if you have more than one 
 usb serial port connected (or see [udev](./using-udev-to-run-the-script-automatically) about using udev)
@@ -85,7 +93,9 @@ Instead of editing the script for each radio it also takes parameters for each o
 ```
 > [!NOTE]
 > If you use the -c or --civ option (for when you have changed the default in the radio) it must follow the -r or --radio option
+
 > The script will default to GMT (unless you have changed it) so the optional -l or --localtime option allows you to use local time
+
 > The -g or --gmt options will revert to use GMT time even if you set 'UseLocalTime=True' in the script.
 
 # Using udev to run the script automatically
@@ -155,9 +165,7 @@ In the event of a problem something like:
 If the radio is connected but not switched on then (after a short delay) the logs will show one or more messages like:
 
  Feb 11 08:12:05 \<computername\> Set-Icom-DateTi[3480]: Set-Icom-DateTime.py:main:311 WARNING No/Unexpected response from 7300 on /dev/ic7300
-
  Feb 11 08:12:05 \<computername\> systemd-udevd[3391]: ttyUSB0: Process '/usr/local/bin/Set-Icom-DateTime.py' failed with exit code 2.
-
  Feb 11 08:12:36 \<computername\> Set-Icom-DateTi[3565]: Set-Icom-DateTime.py:main:454 WARNING No such port: /dev/ic7300
 
 Turn the radio on and then disconnect and re-connect its USB to try again
