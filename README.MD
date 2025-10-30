@@ -1,14 +1,14 @@
 
 # Icom-TimeSync
 
-These are python based scripts to set the Date & Time on Icom CAT controlled Radios, such as@@
+These are python based scripts to set the Date & Time on Icom CAT controlled Radios, such as:
 IC-7100, IC-7300, IC-7610 and IC-9700 
 
 Inspired by https://github.com/Kurgan-/icom-set-time
 
 # Installation and Configuration
 
-If you want to use this Program in Windows then look below for 'Windows Installation Procedure'
+If you want to use these scripts in Windows then look below for 'Windows Installation Procedure'
 
 # Linux Installation
 
@@ -46,17 +46,17 @@ sudo chmod +x /usr/local/bin/Set-Icom7610-DateTime.py
 sudo chmod +x /usr/local/bin/Set-Icom9700-DateTime.py
 ```
 Then edit the following lines in each script:
-
-	radio="7100" \
-	radiociv="0x88" \
-	baud = 115200					# Baud Rate \
-	serialport = "/dev/ttyUSB0"		# Serial port of your radios serial interface. \
-	UseLocalTime=False \
-
+```
+radio="7100"
+radiociv="0x88"
+baud = 115200					# Baud Rate
+serialport = "/dev/ttyUSB0"		# Serial port of your radios serial interface.
+UseLocalTime=False
+```
 Ensure that all the lines are aligned to the left (i.e no extra spaces or TABs have been entered)
 
-Instead of /dev/ttyUSB0 etc you can set a serial port by id so that it always connect to the correct radio
-which is usefeul if you have more than one usb serial port connected (or see below on using udev)
+Instead of /dev/ttyUSB0 etc you can set a serial port by id so that it always connect to the correct radio which is usefeul if you have more than one 
+usb serial port connected (or see (udev)[./using-udev-to-run-the-script-automatically] about using udev)
 
 	serialport = "/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_IC-7300_12345678-if00-port0"
 or
@@ -67,11 +67,9 @@ You can now run each script directly like:
 	/usr/local/bin/Set-Icom7300-DateTime.py
 ```
 
-Alternative to Editing the Script for each radio
-------------------------------------------------
+# Alternative to Editing the Script for each radio
 
 Instead of editing the script for each radio it also takes parameters for each of the options, you can use long or short options like:
-
 ```
 ./Set-Icom-DateTime.py --radio 9700 --civ 0xA2 --port /dev/ttyUSB0 --baud 115200 --localtime
 
@@ -81,14 +79,10 @@ Instead of editing the script for each radio it also takes parameters for each o
 
 ./Set-Icom-DateTime.py -r 9700 -c 0xA2 -p /dev/ttyUSB0 -b 115200 -g
 ```
-> [!NOTE] Notes:
-
->	If you use the -c or --civ option (for when you have changed the default in the radio) it must follow the -r or --radio option
-
->	The script will default to GMT (unless you have changed it) so the optional -l or --localtime option allows you to use local time
-
->	The -g or --gmt options will revert to use GMT time even if you set 'UseLocalTime=True' in the script.
-
+> [!NOTE]
+> If you use the -c or --civ option (for when you have changed the default in the radio) it must follow the -r or --radio option
+> The script will default to GMT (unless you have changed it) so the optional -l or --localtime option allows you to use local time
+> The -g or --gmt options will revert to use GMT time even if you set 'UseLocalTime=True' in the script.
 
 # Using udev to run the script automatically
 
@@ -211,23 +205,23 @@ The ones you need to set are:
 	
 radio, radiociv, baud and serialport
 
-	# Set Radio Model (7100/7300/9700) \
-	radio="9700" \
-	# Radio address (7100= 0x88, 7300 = 0x94, 9700 = 0xA2). \
-	radiociv="0xa2" \
-	# Radio serial speed \
-	baud = 115200 \
-    # Serial port of your radios serial interface (i.e com3) \
-	serialport = "com3" \
-	# Set to True for LocalTime instead of default GMT \
-	UseLocalTime=False \
-
+```
+# Set Radio Model (7100/7300/9700)
+radio="9700"
+# Radio address (7100= 0x88, 7300 = 0x94, 9700 = 0xA2).
+radiociv="0xa2"
+# Radio serial speed
+baud = 115200
+# Serial port of your radios serial interface (i.e com3)
+serialport = "com3"
+# Set to True for LocalTime instead of default GMT
+UseLocalTime=False
+```
 Ensure that all the lines are aligned to the left (i.e no extra spaces or TABs have been entered)
 
 Save the file
 
 Now just double-click the File on the Desktop to set the time on the Radio
-
 
 ## Alternative to Editing the Script
 
@@ -248,13 +242,10 @@ this is perhaps most useful when creating a desktop shortcut.
 
 The script will default to GMT (unless you have changed it) the optional -l or --localtime option allows you to use the local PC Time
 
-
 ## Configuring Windows to auto-run the script at login
 
  * Right click the Desktop Icon (or where-ever you saved the the .pyw file) and select 'Copy as Path'
- * Press Windows+R ,then in the box type 
-		shell:startup
-
+ * Press Windows+R, then in the box type 'shell:startup'
  * Click Ok
  * Right Click in the Window and Select New -> Shortcut then Click Browse
  * Navigate to the C:\Program Files\PythonXXX Folder and Select pythonw.exe (or python.exe for testing)
