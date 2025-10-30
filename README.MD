@@ -166,7 +166,9 @@ In the event of a problem something like:
 If the radio is connected but not switched on then (after a short delay) the logs will show one or more messages like:
 
  Feb 11 08:12:05 \<computername\> Set-Icom-DateTi[3480]: Set-Icom-DateTime.py:main:311 WARNING No/Unexpected response from 7300 on /dev/ic7300
+
  Feb 11 08:12:05 \<computername\> systemd-udevd[3391]: ttyUSB0: Process '/usr/local/bin/Set-Icom-DateTime.py' failed with exit code 2.
+
  Feb 11 08:12:36 \<computername\> Set-Icom-DateTi[3565]: Set-Icom-DateTime.py:main:454 WARNING No such port: /dev/ic7300
 
 Turn the radio on and then disconnect and re-connect its USB to try again
