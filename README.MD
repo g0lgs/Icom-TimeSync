@@ -15,6 +15,10 @@ If you want to use these scripts in Windows then look below for 'Windows Install
 You will need the python3 pyserial library - if that is not installed you need to install it for the user
 that you are using the script as ('root' if you are running it from the udev rules):
 
+> [!WARNING]
+> These instructions really need updating to use the python Virtual Environment feature, to avoid
+> certian known issues with installing pip3 libraries.
+
 ```
 pip3 install pyserial
 ```
@@ -56,7 +60,7 @@ UseLocalTime=False
 Ensure that all the lines are aligned to the left (i.e no extra spaces or TABs have been entered)
 
 Instead of /dev/ttyUSB0 etc you can set a serial port by id so that it always connect to the correct radio which is usefeul if you have more than one 
-usb serial port connected (or see (udev)[./using-udev-to-run-the-script-automatically] about using udev)
+usb serial port connected (or see [udev](./using-udev-to-run-the-script-automatically) about using udev)
 
 	serialport = "/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_IC-7300_12345678-if00-port0"
 or
@@ -142,19 +146,19 @@ journalctl | grep DateTime.py | tail -n 10
 ```
 If it sets the time you should see something like:
 
- Feb 11 07:23:40:24 <computername> Set-Icom-DateTi[12361]: Set-Icom-DateTime.py:main:345 INFO DateTime set on 7300
+ Feb 11 07:23:40:24 \<computername\> Set-Icom-DateTi[12361]: Set-Icom-DateTime.py:main:345 INFO DateTime set on 7300
 
 In the event of a problem something like:
 
- Feb 11 07:25:19 <computername> Set-Icom-DateTi[11387]: Set-Icom-DateTime.py:main:262 WARNING No such port: /dev/ic9700a
+ Feb 11 07:25:19 \<computername\> Set-Icom-DateTi[11387]: Set-Icom-DateTime.py:main:262 WARNING No such port: /dev/ic9700a
 
 If the radio is connected but not switched on then (after a short delay) the logs will show one or more messages like:
 
- Feb 11 08:12:05 <computername> Set-Icom-DateTi[3480]: Set-Icom-DateTime.py:main:311 WARNING No/Unexpected response from 7300 on /dev/ic7300
+ Feb 11 08:12:05 \<computername\> Set-Icom-DateTi[3480]: Set-Icom-DateTime.py:main:311 WARNING No/Unexpected response from 7300 on /dev/ic7300
 
- Feb 11 08:12:05 <computername> systemd-udevd[3391]: ttyUSB0: Process '/usr/local/bin/Set-Icom-DateTime.py' failed with exit code 2.
+ Feb 11 08:12:05 \<computername\> systemd-udevd[3391]: ttyUSB0: Process '/usr/local/bin/Set-Icom-DateTime.py' failed with exit code 2.
 
- Feb 11 08:12:36 <computername> Set-Icom-DateTi[3565]: Set-Icom-DateTime.py:main:454 WARNING No such port: /dev/ic7300
+ Feb 11 08:12:36 \<computername\> Set-Icom-DateTi[3565]: Set-Icom-DateTime.py:main:454 WARNING No such port: /dev/ic7300
 
 Turn the radio on and then disconnect and re-connect its USB to try again
 
@@ -187,7 +191,7 @@ Open the Installer
 
 When the Installation is Complete Open a command prompt
 
-	Enter the command:
+Enter the command:
 ```
 pip3 install pyserial --user
 ```
