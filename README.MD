@@ -38,6 +38,7 @@ Now change the first line of the 'Set-Icom-DateTime.py' Script from:
 
 	#!/usr/bin/python3
 to:
+
 	#/opt/Icom-TimeSync/bin/python3
 
 Now you can place a copy of the script for each radio in /usr/local/bin
