@@ -188,12 +188,12 @@ You will need a recent version of Python for Windows.
 I suggest that you look at [Python Downloads](https://www.python.org/downloads/) and find the latest information on 
 installing Python for Windows
 
-> [!NOTE] Sorry
-> I am not really a Windows python user and so this method does not cover creating a Virtual Envirnoment which may desirable 
+> [!NOTE]
+> Sorry I am not really a Windows python user and so this method does not cover creating a Virtual Envirnoment which may desirable 
 > if you use other python programs in Windows.
 
-> This process is based on my first Installation of Python 3.8.1 (on Windows 7) which I documented in the included 
-> [PDF](/Windows7-Python-Install.pdf)
+This process is based on my first Installation of Python 3.8.1 (on Windows 7) which I documented in the included 
+[PDF](/Windows7-Python-Install.pdf)
 
 * Open the Installer
 * On the Initial Screen select Customize Installation
@@ -219,7 +219,8 @@ Enter the command:
 ```
 pip3 install pyserial --user
 ```
-> [!TIP] It appears that the --user option is required for python 3.8.1 under Windows 7, but Pyhton 3.12.2 on Windows 10 and
+> [!TIP] 
+> It appears that the --user option is required for python 3.8.1 under Windows 7, but Python 3.12.2 on Windows 10 and
 > Windows 11 worked without it.
 
 Download the 'Set-Icom-DateTime-Windows.pyw' from this Repositry and save it to your desktop (or some other location if 
