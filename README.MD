@@ -9,9 +9,9 @@ when my IC-7300 clock battery stopped charging (I do not want to risk using a so
 
 # Installation and Configuration
 
-For Linux see [Linux Installation](./linux-installation)
+For Linux see [Linux Installation](./Icom-TimeSync#linux-installation)
 
-For Windows see [Windows Installation](./windows-installation)
+For Windows see [Windows Installation](./Icom-TimeSync#linux-installation)
 
 # Linux Installation
 
