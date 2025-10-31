@@ -1,19 +1,22 @@
 
 # Icom-TimeSync
 
-These are python based scripts to set the Date & Time on Icom CAT controlled Radios, such as:
-IC-7100, IC-7300, IC-7610 and IC-9700 
+These are python based scripts to set the Date and Time on Icom CAT controlled Radios, such as:
+IC-7100, IC-7300, IC-7610 and IC-9700.
 
-Inspired by https://github.com/Kurgan-/icom-set-time
+This being on of my first real uses of Python was inspired by [Icom-set-time](https://github.com/Kurgan-/icom-set-time)
+when my IC-7300 clock battery stopped charging (I do not want to risk using a soldering iron on the main board).
 
 # Installation and Configuration
 
-If you want to use these scripts in Windows then look below for 'Windows Installation Procedure'
+For Linux see [Linux Installation](./linux-installation)
+
+For Windows see [Windows Installation](./windows-installation)
 
 # Linux Installation
 
 > [!NOTE]
-> I really should fathom out a better way of dealing with a python virtual env, but this seems to work
+> I really should fathom out a better way of dealing with a python virtual env, but this seems to work.
 
 Downlaod the code from GitHub:
 
@@ -39,9 +42,9 @@ Now change the first line of the 'Set-Icom-DateTime.py' Script from:
 	#!/usr/bin/python3
 to:
 
-	#/opt/Icom-TimeSync/bin/python3
+	#!/opt/Icom-TimeSync/bin/python3
 
-Now you can place a copy of the script for each radio in /usr/local/bin
+Now you can place a copy of the script for each radio in /usr/local/bin (or some other location should you wish)
 
 i.e
 ```
@@ -66,10 +69,11 @@ baud = 115200					# Baud Rate
 serialport = "/dev/ttyUSB0"		# Serial port of your radios serial interface.
 UseLocalTime=False
 ```
-Ensure that all the lines are aligned to the left (i.e no extra spaces or TABs have been entered) as this will break it!
+Ensure that all the lines are aligned to the left (i.e no extra spaces or TABs have been entered) as this will break the python code.
 
-Instead of /dev/ttyUSB0 etc you can set a serial port by id so that it always connect to the correct radio which is usefeul if you have more than one 
-usb serial port connected (or see [udev](./using-udev-to-run-the-script-automatically) about using udev)
+Instead of /dev/ttyUSB0 etc you can set a serial port by id so that it always connect to the correct radio which is usefeul 
+if you have more than one usb serial port connected (or see [udev](./using-udev-to-run-the-script-automatically) about using 
+udev)
 
 	serialport = "/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_IC-7300_12345678-if00-port0"
 or
@@ -80,9 +84,11 @@ You can now run each script directly like:
 	/usr/local/bin/Set-Icom7300-DateTime.py
 ```
 
-# Alternative to Editing the Script for each radio
+## Alternative to Editing the Script for each radio
 
-Instead of editing the script for each radio it also takes parameters for each of the options, you can use long or short options like:
+Instead of editing the script for each radio it also takes parameters for each of the options, you can use long or short 
+options like: 
+
 ```
 ./Set-Icom-DateTime.py --radio 9700 --civ 0xA2 --port /dev/ttyUSB0 --baud 115200 --localtime
 
@@ -99,10 +105,10 @@ Instead of editing the script for each radio it also takes parameters for each o
 
 > The -g or --gmt options will revert to use GMT time even if you set 'UseLocalTime=True' in the script.
 
-# Using udev to run the script automatically
+## Using udev to run the script automatically
 
-For the serial port you can use a udev rule to create a symlink that always points to the correct radio and
-if you wish run the script to set the Date/Time each time the radio is connected.
+An alternative is to use a udev rule to create and update a symlink that always points to the correct radio and
+may also be used to run the script to set the Date/Time each time the radio is connected.
 
 You will need to find the appropriate information for each of your radios, using a combination of the commands:
 ```
@@ -120,7 +126,7 @@ Look for the following:
 
 create a udev rule in /etc/udev/rules.d/
 
-	I use '99-hamlib.rules' but you can use something else as long as it is a .rules
+	I use '99-hamlib.rules' but you can use something else as long as it ends with '.rules'
 
 ```
 	sudo nano /etc/udev/rules.d/99-hamlib.rules
@@ -141,15 +147,17 @@ ACTION=="add", KERNEL=="ttyUSB?" SUBSYSTEM=="tty", \
 ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="IC-7300 12345678", SYMLINK+="ic7300"
 RUN{program}+="/usr/local/bin/Set-Icom-DateTime.py --radio 7300 --baud 115200 --port /dev/ic7300"
 ```
-This will run the script when the Radio is connected or the Computer is started with the Radio connected.
+
+This will create the symlink and run the script when the Radio is connected or the Computer is started with the Radio 
+connected.
 
 Multiple RUN{program}+="" values may be used if you want to run other programs too (with some restrictions)
 
-After editing udev rules use
+After editing udev rules use:
 ```
 sudo udevadm control --reload
 ```
-You should then disconnect and re-connect the radios USB to check that it works.
+You should then disconnect and re-connect the radio USB connection to check that it works.
 
 The script should run and log any issues to syslog which you can examine with:
 ```
@@ -173,16 +181,21 @@ If the radio is connected but not switched on then (after a short delay) the log
 
 Turn the radio on and then disconnect and re-connect its USB to try again
 
-# Windows Installation Procedure
+# Windows Installation
 
 You will need a recent version of Python for Windows.
 
-Please refer to the PDF for Windows 7
+I suggest that you look at [Python Downloads](https://www.python.org/downloads/) and find the latest information on 
+installing Python for Windows
 
-Go to https://www.python.org/downloads/ to download the Latest Python Version for Windows
+> [!NOTE] Sorry
+> I am not really a Windows python user and so this method does not cover creating a Virtual Envirnoment which may desirable 
+> if you use other python programs in Windows.
 
-Open the Installer
+> This process is based on my first Installation of Python 3.8.1 (on Windows 7) which I documented in the included 
+> [PDF](/Windows7-Python-Install.pdf)
 
+* Open the Installer
 * On the Initial Screen select Customize Installation
 * Ensure that the follow options are enabled:
 	- pip
@@ -198,23 +211,23 @@ Open the Installer
 * Click Install
 * Click Yes (when prompted) about making changes.
 
-* when 'Steup was sucessful' appears Click Close
+* When 'Steup was sucessful' appears Click Close
 
-When the Installation is Complete Open a command prompt
+When the Installation is complete open a command prompt
 
 Enter the command:
 ```
 pip3 install pyserial --user
 ```
+> [!TIP] It appears that the --user option is required for python 3.8.1 under Windows 7, but Pyhton 3.12.2 on Windows 10 and
+> Windows 11 worked without it.
 
-(Note the --user option is required for python 3.8.1 under Windows 7, but Pyton 3.12.2 on Windows 10 or 11 work without it)
-
-Now download the 'Set-Icom-DateTime-Windows.pyw' from this Git Repositry and save it to your desktop
-(or some other location if you prefer)
+Download the 'Set-Icom-DateTime-Windows.pyw' from this Repositry and save it to your desktop (or some other location if 
+you prefer)
 
 After downloading open the file in your prefered Text Editor (i.e Notepad++)
 
-Change the Settings around lines 20 to 28 to set the appropriate values for your radio
+Change the settings around lines 20 to 28 to set the appropriate values for your radio
 
 The ones you need to set are:
 	
@@ -255,7 +268,8 @@ or
 Without the the -n or --noprompt the script will prompt (via a pop-up dialog box) that you are ready to set the radio,
 this is perhaps most useful when creating a desktop shortcut.
 
-The script will default to GMT (unless you have changed it) the optional -l or --localtime option allows you to use the local PC Time
+The script will default to GMT (unless you have changed it) but the optional -l or --localtime option allows you to use the 
+local PC Time
 
 ## Configuring Windows to auto-run the script at login
 
